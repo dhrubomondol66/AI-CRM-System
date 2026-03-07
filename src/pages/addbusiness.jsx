@@ -48,6 +48,60 @@ const generateSlug = (name) =>
 
 const STANDARD_TYPES = ["Health Clinic", "Dental Clinic", "Restaurant", "Salon", "Fitness", "Cafe"];
 
+// ── Logo upload helper: tries multiple field names ─────────────────────────
+const uploadLogoWithFallback = async (businessId, file) => {
+  const fieldNames = ["file", "logo", "image", "business_logo", "logo_file", "img"];
+  const tried = new Set();
+  let lastErr = null;
+
+  const tryUpload = async (fieldName) => {
+    if (tried.has(fieldName)) return null;
+    tried.add(fieldName);
+
+    try {
+      const formData = new FormData();
+      formData.append(fieldName, file);
+      const res = await api.post(`/api/v1/admin/businesses/${businessId}/logo`, formData, { headers: { "Content-Type": "multipart/form-data" }, });
+      return res.data;
+    } catch (err) {
+      lastErr = err;
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+
+      console.warn(`Upload failed for field "${fieldName}":`, status, detail);
+
+      // If FastAPI (422) tells us which field is missing, try to extract it!
+      if (status === 422 && Array.isArray(detail)) {
+        for (const d of detail) {
+          // loc usually looks like ["body", "logo_file"] or ["body", "file"]
+          if (Array.isArray(d.loc) && d.loc.length > 1) {
+            const discoveredField = d.loc[d.loc.length - 1];
+            if (!tried.has(discoveredField)) {
+              console.log(`Discovered required field name from server: "${discoveredField}"`);
+              return await tryUpload(discoveredField);
+            }
+          }
+        }
+      }
+      return null;
+    }
+  };
+
+  // Initial sequence
+  for (const name of fieldNames) {
+    const success = await tryUpload(name);
+    if (success) return success;
+  }
+
+  // Final reported error
+  const lastDetail = lastErr?.response?.data?.detail;
+  let specificMsg = "";
+  if (Array.isArray(lastDetail) && lastDetail[0]?.loc) {
+    specificMsg = ` (Server requested: ${lastDetail[0].loc.join('.')})`;
+  }
+  throw lastErr ?? new Error("Logo upload failed — no valid field name accepted by server." + specificMsg);
+};
+
 // ── Component ──────────────────────────────────────────────────────────────
 const AddBusinessPage = () => {
   const navigate = useNavigate();
@@ -85,6 +139,12 @@ const AddBusinessPage = () => {
   const [editFormData, setEditFormData] = useState({});
   const [editPendingAdd, setEditPendingAdd] = useState([]);
   const [editPendingDelete, setEditPendingDelete] = useState([]);
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+
+  // Separate logo state for the edit card flow
+  const [editLogoFile, setEditLogoFile] = useState(null);
+  const [editLogoPreview, setEditLogoPreview] = useState(null);
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -124,12 +184,20 @@ const AddBusinessPage = () => {
     fetchBusinesses();
   }, []);
 
+  const refreshBusinessList = async () => {
+    const res = await api.get("/api/v1/admin/businesses/");
+    const list = Array.isArray(res.data) ? res.data : res.data?.data ?? [];
+    setBusinessCards(list);
+    return list;
+  };
+
   const handleEdit = (business) => {
     setEditingCardId(business.id);
     setEditFormData({
       business_name: business.business_name ?? "",
       slug: business.slug ?? "",
       description: business.description ?? "",
+      logo: business.logo ?? "",
       service_type_name: business.service_type_name ?? "",
       contact_fullname: business.contact_fullname ?? "",
       contact_email: business.contact_email ?? "",
@@ -143,6 +211,8 @@ const AddBusinessPage = () => {
     });
     setEditPendingAdd([]);
     setEditPendingDelete([]);
+    setEditLogoFile(null);
+    setEditLogoPreview(null);
   };
 
   const handleCancelEdit = () => {
@@ -150,10 +220,32 @@ const AddBusinessPage = () => {
     setEditFormData({});
     setEditPendingAdd([]);
     setEditPendingDelete([]);
+    setEditLogoFile(null);
+    setEditLogoPreview(null);
   };
 
   const handleEditFieldChange = (field, value) =>
     setEditFormData((prev) => ({ ...prev, [field]: value }));
+
+  // Logo change for NEW business form
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setLogoPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  // Logo change for EDIT card
+  const handleEditLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setEditLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setEditLogoPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
 
   const handleAddServiceToCard = (business_id) => {
     const newServiceName = newServiceInputs[business_id]?.trim();
@@ -217,6 +309,19 @@ const AddBusinessPage = () => {
       const res = await api.patch(`/api/v1/admin/businesses/${business_id}`, payload);
       const updated = res.data?.data ?? res.data;
       setBusinessCards((prev) => prev.map((b) => (b.id === business_id ? { ...b, ...updated } : b)));
+
+      // Upload logo if a new file was selected in the edit form
+      if (editLogoFile) {
+        try {
+          await uploadLogoWithFallback(business_id, editLogoFile);
+          await refreshBusinessList();
+        } catch (logoErr) {
+          setError("Business updated but logo upload failed: " + formatBackendError(logoErr));
+        }
+        setEditLogoFile(null);
+        setEditLogoPreview(null);
+      }
+
       try {
         const sRes = await api.get(`/api/v1/admin/businesses/${business_id}/services`);
         const sRaw = sRes.data?.data ?? sRes.data ?? [];
@@ -227,6 +332,7 @@ const AddBusinessPage = () => {
             : [],
         }));
       } catch { /* non-critical */ }
+
       setEditingCardId(null);
       setEditFormData({});
       setEditPendingAdd([]);
@@ -253,6 +359,10 @@ const AddBusinessPage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    // ── Capture logo file NOW before any state resets ──
+    const capturedLogoFile = logoFile;
+
     const newCard = Object.fromEntries(
       Object.entries({
         business_name: businessName.trim(),
@@ -266,36 +376,62 @@ const AddBusinessPage = () => {
         city: city.trim(),
         state: state.trim(),
         zip_code: zipCode.trim(),
+        country: country.trim() || "USA",
+        timezone: timezone.trim() || "UTC",
       }).filter(([, v]) => v !== "")
     );
+
     try {
       const res = await api.post("/api/v1/admin/businesses/", newCard);
       const created = res.data?.data ?? res.data;
-      setBusinessCards((prev) => [created, ...prev]);
-      setCardServices((prev) => ({ ...prev, [created.id]: [] }));
+
+      // ── Reset form fields immediately ──
+      setBusinessName(""); setSlug(""); setBusinessDescription("");
+      setLogoFile(null); setLogoPreview(null);
+      setContactName(""); setEmail(""); setPhone("");
+      setAddress(""); setCity(""); setState(""); setZipCode("");
+      setCountry("USA"); setTimezone("UTC");
+      setBusinessType(""); setOtherService("");
+      setFormServices([]);
+
+      // ── Upload logo using captured file reference ──
+      if (capturedLogoFile) {
+        try {
+          await uploadLogoWithFallback(created.id, capturedLogoFile);
+        } catch (logoErr) {
+          console.error("Logo upload failed:", logoErr);
+          setError("Business created but logo upload failed: " + formatBackendError(logoErr));
+        }
+      }
+
+      // ── Add services ──
       if (formServices.length > 0) {
         try {
           await api.patch(`/api/v1/admin/businesses/${created.id}`, {
             add_services: formServices.map((s) => ({ service_name: s })),
             delete_service_ids: null,
           });
-          const sRes = await api.get(`/api/v1/admin/businesses/${created.id}/services`);
-          const sRaw = sRes.data?.data ?? sRes.data ?? [];
-          setCardServices((prev) => ({
-            ...prev,
-            [created.id]: Array.isArray(sRaw)
-              ? sRaw.map((s) => ({ id: String(s.id ?? s._id ?? ""), name: s.name ?? s.service_name ?? s }))
-              : [],
-          }));
         } catch (svcErr) {
           console.error("Non-critical: services failed to save", svcErr);
         }
       }
-      setBusinessName(""); setSlug(""); setBusinessDescription("");
-      setContactName(""); setEmail(""); setPhone("");
-      setAddress(""); setCity(""); setState(""); setZipCode("");
-      setBusinessType(""); setOtherService("");
-      setFormServices([]);
+
+      // ── Refresh list to pick up logo URL & services from server ──
+      const updatedList = await refreshBusinessList();
+      setCardServices((prev) => ({ ...prev, [created.id]: [] }));
+
+      // Fetch services for the new business
+      try {
+        const sRes = await api.get(`/api/v1/admin/businesses/${created.id}/services`);
+        const sRaw = sRes.data?.data ?? sRes.data ?? [];
+        setCardServices((prev) => ({
+          ...prev,
+          [created.id]: Array.isArray(sRaw)
+            ? sRaw.map((s) => ({ id: String(s.id ?? s._id ?? ""), name: s.name ?? s.service_name ?? s }))
+            : [],
+        }));
+      } catch { /* non-critical */ }
+
     } catch (err) {
       setError(formatBackendError(err));
     } finally {
@@ -345,7 +481,17 @@ const AddBusinessPage = () => {
                 <div key={b.id} className="business-card">
                   <div className="business-card-head">
                     <div>
-                      <h4 className="business-card-title">{b.business_name}</h4>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+                        {b.logo_url && (
+                          <img
+                            src={b.logo_url}
+                            alt={`${b.business_name} logo`}
+                            style={{ width: "32px", height: "32px", objectFit: "cover", borderRadius: "6px", border: "1px solid #e5e7eb" }}
+                            onError={(e) => { e.target.style.display = "none"; }}
+                          />
+                        )}
+                        <h4 className="business-card-title" style={{ margin: 0 }}>{b.business_name}</h4>
+                      </div>
                       <span className="business-card-sub">{b.service_type_name}</span>
                     </div>
                     <div className="card-actions">
@@ -372,6 +518,36 @@ const AddBusinessPage = () => {
                           <div className="edit-field"><label>Business Name</label><input type="text" value={editFormData.business_name || ""} onChange={(e) => handleEditFieldChange("business_name", e.target.value)} /></div>
                           <div className="edit-field"><label>Slug</label><input type="text" value={editFormData.slug || ""} onChange={(e) => handleEditFieldChange("slug", e.target.value)} /></div>
                           <div className="edit-field full"><label>Description</label><textarea value={editFormData.description || ""} onChange={(e) => handleEditFieldChange("description", e.target.value)} /></div>
+
+                          {/* ── Edit Logo ── */}
+                          <div className="edit-field full">
+                            <label>Business Logo</label>
+                            <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                              {/* Show current logo if no new file picked */}
+                              {!editLogoPreview && b.logo_url && (
+                                <img
+                                  src={b.logo_url}
+                                  alt="Current logo"
+                                  style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "4px", border: "1px solid #e5e7eb" }}
+                                  onError={(e) => { e.target.style.display = "none"; }}
+                                />
+                              )}
+                              {editLogoPreview && (
+                                <img
+                                  src={editLogoPreview}
+                                  alt="New logo preview"
+                                  style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "4px", border: "2px solid #2563eb" }}
+                                />
+                              )}
+                              <input type="file" accept="image/*" onChange={handleEditLogoChange} style={{ flex: 1 }} />
+                              {editLogoFile && (
+                                <span style={{ fontSize: "0.75rem", color: "#2563eb" }}>
+                                  ✓ Will upload on save
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
                           <div className="edit-field full">
                             <label>Services</label>
                             {svcError[b.id] && <p className="svc-error-text">{svcError[b.id]}</p>}
@@ -414,7 +590,7 @@ const AddBusinessPage = () => {
                       </div>
                     ) : (
                       <>
-                        <p className="business-card-desc" style={{textAlign:'left'}}>{b.description}</p>
+                        <p className="business-card-desc" style={{ textAlign: "left" }}>{b.description}</p>
                         <div className="business-card-info">
                           <div className="info-row"><span className="info-label">Contact:</span><span className="info-value">{b.contact_fullname}</span></div>
                           <div className="info-row"><span className="info-label">Email:</span><span className="info-value">{b.contact_email}</span></div>
@@ -439,11 +615,8 @@ const AddBusinessPage = () => {
             </div>
             {businessCards.length > 3 && (
               <div style={{ textAlign: "center", marginTop: "1rem" }}>
-                <button
-                  className="card-btn"
-                  onClick={() => setShowAllCards((prev) => !prev)}
-                >
-                  {showAllCards ? "See Less ▲" : "See More (" + (businessCards.length - 3) + " more) ▼"}
+                <button className="card-btn" onClick={() => setShowAllCards((prev) => !prev)}>
+                  {showAllCards ? "See Less ▲" : `See More (${businessCards.length - 3} more) ▼`}
                 </button>
               </div>
             )}
@@ -456,6 +629,23 @@ const AddBusinessPage = () => {
                 <div className="form-group"><label>Business Name *</label><input type="text" value={businessName} onChange={(e) => { setBusinessName(e.target.value); setSlug(generateSlug(e.target.value)); }} placeholder="e.g., Downtown Health Clinic" required /></div>
                 <div className="form-group"><label>Slug *</label><input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="e.g., downtown-health-clinic" required /><small style={{ color: "#6b7280", fontSize: "0.75rem" }}>Auto-generated. Must be unique.</small></div>
                 <div className="form-group"><label>Description *</label><textarea value={businessDescription} onChange={(e) => setBusinessDescription(e.target.value)} placeholder="About your business" required /></div>
+
+                {/* ── Logo with preview ── */}
+                <div className="form-group">
+                  <label>Logo</label>
+                  <input type="file" accept="image/*" onChange={handleLogoChange} />
+                  {logoPreview && (
+                    <div style={{ marginTop: "0.5rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        style={{ width: "56px", height: "56px", objectFit: "cover", borderRadius: "6px", border: "2px solid #2563eb" }}
+                      />
+                      <span style={{ fontSize: "0.8rem", color: "#2563eb" }}>✓ Logo selected — will upload after creation</span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="form-group">
                   <label>Service Type *</label>
                   <select value={businessType} onChange={(e) => setBusinessType(e.target.value)} required>
@@ -471,18 +661,10 @@ const AddBusinessPage = () => {
                     <div style={{ display: "flex", gap: "0.5rem" }}>
                       <input type="text" value={otherService} onChange={(e) => setOtherService(e.target.value)} placeholder="Enter custom service type" />
                       <button type="button" onClick={handleAddCustomService} disabled={!otherService.trim()} style={{
-                        padding: '0.80rem 1rem',
-                        border: 'none',
-                        borderRadius: 'var(--radius-md)',
-                        backgroundColor: otherService.trim() ? '#4CAF50' : '#ccc',
-                        color: 'white',
-                        fontWeight: '600',
-                        fontSize: '0.875rem',
-                        cursor: otherService.trim() ? 'pointer' : 'not-allowed',
-                        transition: 'all var(--transition-base)',
-                        whiteSpace: 'nowrap',
-                        height: '100%',
-                        marginTop: '0.5rem'
+                        padding: "0.80rem 1rem", border: "none", borderRadius: "var(--radius-md)",
+                        backgroundColor: otherService.trim() ? "#4CAF50" : "#ccc", color: "white",
+                        fontWeight: "600", fontSize: "0.875rem", cursor: otherService.trim() ? "pointer" : "not-allowed",
+                        transition: "all var(--transition-base)", whiteSpace: "nowrap", height: "100%", marginTop: "0.5rem"
                       }}>Add Type</button>
                     </div>
                   </div>
@@ -514,16 +696,6 @@ const AddBusinessPage = () => {
                 </div>
               </form>
             </div>
-            {/* {businessCards.length > 3 && (
-              <div style={{ textAlign: "center", marginTop: "1rem" }}>
-                <button
-                  className="card-btn"
-                  onClick={() => setShowAllCards((prev) => !prev)}
-                >
-                  {showAllCards ? "See Less ▲" : "See More (" + (businessCards.length - 3) + " more) ▼"}
-                </button>
-              </div>
-            )} */}
           </section>
         </div>
       </main>

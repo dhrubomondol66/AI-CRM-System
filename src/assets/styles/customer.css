@@ -669,6 +669,16 @@ body {
   }
 }
 
+/* Service logo styles */
+.service-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
 .footer-text {
   color: #4b5563;
   font-size: 0.875rem;

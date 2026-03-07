@@ -31,30 +31,31 @@ const getSessionId = () => {
 const normalizeService = (item, i) => {
   const rawPrice = item.price ?? item.base_price;
   return {
-    id:           item.id ?? item._id ?? i,
-    title:        item.title ?? item.name ?? item.service_name ?? 'Untitled Service',
-    description:  item.description ?? item.desc ?? '',
-    price:        rawPrice != null
-                    ? (typeof rawPrice === 'number' ? rawPrice : parseFloat(rawPrice) || 0)
-                    : 0,
+    id: item.id ?? item._id ?? i,
+    title: item.title ?? item.name ?? item.service_name ?? 'Untitled Service',
+    description: item.description ?? item.desc ?? '',
+    price: rawPrice != null
+      ? (typeof rawPrice === 'number' ? rawPrice : parseFloat(rawPrice) || 0)
+      : 0,
     priceDisplay: rawPrice != null
-                    ? `$${parseFloat(rawPrice).toFixed(2)}`
-                    : 'Free',
-    currency:         item.currency ?? 'USD',
+      ? `$${parseFloat(rawPrice).toFixed(2)}`
+      : 'Free',
+    currency: item.currency ?? 'USD',
     duration_minutes: item.duration_minutes ?? 60,
-    business_name:    item.business_name ?? item.business?.name ?? null,
-    business_type:    item.business_type ?? item.service_type_name
-                      ?? item.business?.service_type_name ?? null,
+    business_name: item.business_name ?? item.business?.name ?? null,
+    business_type: item.business_type ?? item.service_type_name
+      ?? item.business?.service_type_name ?? null,
+    logo_url: item.logo_url ?? item.logo ?? item.business?.logo_url ?? null,
   };
 };
 
 // ── Call state enum ────────────────────────────────────────────────────────
 const CALL_STATE = {
-  IDLE:       'idle',
+  IDLE: 'idle',
   CONNECTING: 'connecting',   // fetching token & registering device
-  RINGING:    'ringing',      // outbound call placed, waiting for answer
-  IN_CALL:    'in-call',
-  ENDED:      'ended',        // shown briefly before reset to IDLE
+  RINGING: 'ringing',      // outbound call placed, waiting for answer
+  IN_CALL: 'in-call',
+  ENDED: 'ended',        // shown briefly before reset to IDLE
 };
 
 // ── Format mm:ss ────────────────────────────────────────────────────────────
@@ -106,14 +107,14 @@ function PaymentOptionsCard({ bookingId, paymentUrl, onPayLater }) {
 //  • Exposes: callState, startCall, endCall, isMuted, toggleMute, callDuration, error
 //
 function useTwilioVoice({ business_slug, selectedService, sessionId }) {
-  const deviceRef  = useRef(null);
-  const callRef    = useRef(null);
-  const timerRef   = useRef(null);
+  const deviceRef = useRef(null);
+  const callRef = useRef(null);
+  const timerRef = useRef(null);
 
-  const [callState,    setCallState]    = useState(CALL_STATE.IDLE);
-  const [isMuted,      setIsMuted]      = useState(false);
+  const [callState, setCallState] = useState(CALL_STATE.IDLE);
+  const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
-  const [error,        setError]        = useState(null);
+  const [error, setError] = useState(null);
   // Clean up on unmount
   useEffect(() => () => {
     clearInterval(timerRef.current);
@@ -133,18 +134,18 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
 
     const res = await api.post('/api/v1/voice/twilio/', {
       business_slug,
-      service_name:    selectedService?.title,
+      service_name: selectedService?.title,
       user_session_id: sessionId,
-      action:          'token',
+      action: 'token',
     });
 
     const token = res.data?.token ?? res.data?.data?.token;
     if (!token) throw new Error('No Twilio access token returned from server.');
 
     const device = new Device(token, {
-      logLevel:            1,
-      codecPreferences:    ['opus', 'pcmu'],
-      enableRingingState:  true,
+      logLevel: 1,
+      codecPreferences: ['opus', 'pcmu'],
+      enableRingingState: true,
     });
 
     device.on('error', (twilioError) => {
@@ -174,8 +175,8 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
   const attachCallHandlers = (call) => {
     callRef.current = call;
 
-    call.on('ringing',    () => setCallState(CALL_STATE.RINGING));
-    call.on('accept',     () => { setCallState(CALL_STATE.IN_CALL); setIsMuted(false); startTimer(); });
+    call.on('ringing', () => setCallState(CALL_STATE.RINGING));
+    call.on('accept', () => { setCallState(CALL_STATE.IN_CALL); setIsMuted(false); startTimer(); });
     call.on('disconnect', () => {
       setCallState(CALL_STATE.ENDED);
       stopTimer();
@@ -183,7 +184,7 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
       setTimeout(() => setCallState(CALL_STATE.IDLE), 2000);
     });
     call.on('cancel', () => { setCallState(CALL_STATE.IDLE); stopTimer(); callRef.current = null; });
-    call.on('error',  (err) => {
+    call.on('error', (err) => {
       setError(err.message ?? 'Call error');
       setCallState(CALL_STATE.IDLE);
       stopTimer();
@@ -197,11 +198,11 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
     setCallState(CALL_STATE.CONNECTING);
     try {
       const device = await initDevice();
-      const call   = await device.connect({
+      const call = await device.connect({
         params: {
-          business_slug:    business_slug    ?? '',
-          service_name:     selectedService?.title ?? '',
-          user_session_id:  sessionId        ?? '',
+          business_slug: business_slug ?? '',
+          service_name: selectedService?.title ?? '',
+          user_session_id: sessionId ?? '',
         },
       });
       attachCallHandlers(call);
@@ -237,8 +238,8 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
     useTwilioVoice({ business_slug, selectedService, sessionId });
 
   const isActive = callState === CALL_STATE.IN_CALL;
-  const isBusy   = callState === CALL_STATE.CONNECTING || callState === CALL_STATE.RINGING;
-  const isIdle   = callState === CALL_STATE.IDLE || callState === CALL_STATE.ENDED;
+  const isBusy = callState === CALL_STATE.CONNECTING || callState === CALL_STATE.RINGING;
+  const isIdle = callState === CALL_STATE.IDLE || callState === CALL_STATE.ENDED;
 
   const handleMainClick = () => {
     if (isIdle) startCall();
@@ -247,11 +248,11 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
 
   // Visual config per state
   const stateConfig = {
-    [CALL_STATE.IDLE]:       { label: 'Start Call',  bg: '#10b981', icon: 'phone'     },
-    [CALL_STATE.CONNECTING]: { label: 'Connecting…', bg: '#64748b', icon: 'loading'   },
-    [CALL_STATE.RINGING]:    { label: 'Ringing…',    bg: '#f59e0b', icon: 'loading'   },
-    [CALL_STATE.IN_CALL]:    { label: 'End Call',    bg: '#ef4444', icon: 'phone-off' },
-    [CALL_STATE.ENDED]:      { label: 'Call Ended',  bg: '#64748b', icon: 'phone'     },
+    [CALL_STATE.IDLE]: { label: 'Start Call', bg: '#10b981', icon: 'phone' },
+    [CALL_STATE.CONNECTING]: { label: 'Connecting…', bg: '#64748b', icon: 'loading' },
+    [CALL_STATE.RINGING]: { label: 'Ringing…', bg: '#f59e0b', icon: 'loading' },
+    [CALL_STATE.IN_CALL]: { label: 'End Call', bg: '#ef4444', icon: 'phone-off' },
+    [CALL_STATE.ENDED]: { label: 'Call Ended', bg: '#64748b', icon: 'phone' },
   };
   const { label, bg, icon } = stateConfig[callState] ?? stateConfig[CALL_STATE.IDLE];
 
@@ -287,7 +288,7 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
               width: '34px', height: '34px', borderRadius: '50%', border: 'none',
               cursor: 'pointer',
               background: isMuted ? '#fee2e2' : '#f1f5f9',
-              color:      isMuted ? '#dc2626' : '#475569',
+              color: isMuted ? '#dc2626' : '#475569',
               transition: 'all 0.15s',
             }}
           >
@@ -297,7 +298,7 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
       )}
 
       {/* Main call button */}
-      <button className="start-call-btn" onClick={() => {  if (!selectedService) { alert('Select a service first'); return; }  setShowVoiceCall(true);}}>
+      <button className="start-call-btn" onClick={() => { if (!selectedService) { alert('Select a service first'); return; } setShowVoiceCall(true); }}>
         <Phone className="phone-icon" /> Start Call
       </button>
 
@@ -313,29 +314,34 @@ export default function BookingAssistant() {
   const navigate = useNavigate();
 
   const bidFromQuery = new URLSearchParams(location.search).get('bid');
-  const sessionId    = useRef(getSessionId()).current;
+  const sessionId = useRef(getSessionId()).current;
 
   // ── State ────────────────────────────────────────────────────────────────
-  const [services,          setServices]          = useState([]);
-  const [selectedService,   setSelectedService]   = useState(null);
-  const [selectedTime,      setSelectedTime]      = useState('7:00 PM');
-  const [message,           setMessage]           = useState('');
-  const [chatMessages,      setChatMessages]      = useState([]);
-  const [chatLoading,       setChatLoading]       = useState(false);
-  const [servicesLoading,   setServicesLoading]   = useState(false);
-  const [error,             setError]             = useState(null);
-  const [progress,          setProgress]          = useState(30);
+  const [services, setServices] = useState([]);
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedTime, setSelectedTime] = useState('7:00 PM');
+  const [message, setMessage] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(30);
   const [conversationStarted, setConversationStarted] = useState(false);
-  const [conversationId,    setConversationId]    = useState(null);
-  const [paymentLink,       setPaymentLink]       = useState(null);
-  const [paymentLoading,    setPaymentLoading]    = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  const [paymentLink, setPaymentLink] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [detectedBookingId, setDetectedBookingId] = useState(null);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
 
   const chatEndRef = useRef(null);
 
   const business = services.length > 0
-    ? { name: services[0].business_name, service_type_name: services[0].business_type }
+    ? {
+      business_slug: services[0].business_slug || services[0].slug || business_slug,
+      name: services[0].business_name,
+      service_type_name: services[0].business_type,
+      logo_url: services[0].logo_url
+    }
     : null;
 
   // ── Auto-scroll chat ─────────────────────────────────────────────────────
@@ -362,7 +368,7 @@ export default function BookingAssistant() {
         }
       } catch (err) {
         const status = err?.response?.status;
-        const msg    = err?.response?.data?.message ?? err?.response?.data?.error;
+        const msg = err?.response?.data?.message ?? err?.response?.data?.error;
         setError(!err.response
           ? 'Network error — cannot reach the server.'
           : (msg ?? `Error ${status} loading services.`));
@@ -385,17 +391,17 @@ export default function BookingAssistant() {
       try {
         const res = await api.post('/api/v1/chat/conversations', {
           business_slug,
-          service_name:    selectedService.title,   // backend resolves to ID
+          service_name: selectedService.title,   // backend resolves to ID
           user_session_id: sessionId,
-          channel:         'CHAT',
+          channel: 'CHAT',
         });
         const convId = res.data?.id ?? res.data?.conversation_id ?? res.data?.data?.id;
         if (convId) setConversationId(convId);
 
         const aiReply =
           res.data?.first_message ??
-          res.data?.message       ??
-          res.data?.reply         ??
+          res.data?.message ??
+          res.data?.reply ??
           res.data?.data?.message ??
           `Hello! I see you're interested in "${selectedService.title}". I can help you book this right now. What time would work best for you?`;
 
@@ -496,9 +502,9 @@ export default function BookingAssistant() {
     if (!selectedService) { alert('Please select a service first.'); return; }
     navigate('/paymentsystem', {
       state: {
-        serviceId:    selectedService.id,
-        serviceName:  selectedService.title,
-        price:        selectedService.price,
+        serviceId: selectedService.id,
+        serviceName: selectedService.title,
+        price: selectedService.price,
         selectedTime,
         selectedDate: 'Saturday, Oct 28th',
         businessName: business?.name ?? business_slug,
@@ -518,13 +524,24 @@ export default function BookingAssistant() {
           <aside className="sidebar">
             <div className="booking-card">
               <div className="card-header">
-                <div className="cart-icon"><img src={market} alt="market" /></div>
+                <div className="cart-icon">
+                  {business?.logo_url ? (
+                    <img
+                      src={business.logo_url}
+                      alt="Business Logo"
+                      style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }}
+                      onError={(e) => { e.target.src = market; }}
+                    />
+                  ) : (
+                    <img src={market} alt="market" />
+                  )}
+                </div>
                 <div>
-                  <h2 className="card-title" style={{ fontSize: '1.25rem' }}>
-                    {servicesLoading ? 'Loading...' : (business?.name || business?.business_name || 'Booking Inquiry')}
+                  <h2 className="card-title" style={{ fontSize: '1.25rem', textAlign:'right' }}>
+                    {servicesLoading ? 'Loading...' : (business?.name || 'Booking Inquiry')}
                   </h2>
-                  <p className="card-subtitle">
-                    {business?.service_type_name || 'Direct Reservation'}
+                  <p className="card-subtitle" style={{ textAlign: 'right' }}>
+                    {business?.service_type_name || business?.service_type || 'Direct Reservation'}
                   </p>
                 </div>
               </div>

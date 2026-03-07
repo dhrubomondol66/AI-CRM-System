@@ -14,7 +14,6 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
 
-// Add interceptor to read token from both cookie and localStorage
 api.interceptors.request.use((config) => {
   const token = Cookies.get('access_token') || localStorage.getItem('access_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -39,10 +38,78 @@ const normalizeServices = (data) => {
     badge: item.badge ?? item.tag ?? (item.is_popular ? 'MOST POPULAR' : null),
     category: item.category ?? item.service_type ?? 'All Services',
     business_slug: item.business_slug ?? item.slug ?? null,
+    logo_url: item.logo_url ?? item.logo ?? null,
   }));
 };
 
 const TABS = ['All Services'];
+
+// ── Authenticated logo hook ────────────────────────────────────────────────
+// Fetches logo as a blob so the Authorization header is sent correctly.
+// Returns a local object URL (or null while loading / on error).
+function useAuthLogo(businessSlug) {
+  const [src, setSrc] = useState(null);
+
+  useEffect(() => {
+    if (!businessSlug) return;
+    let objectUrl = null;
+    let cancelled = false;
+
+    api
+      .get(`/api/v1/public/${businessSlug}/logo`, { responseType: 'blob' })
+      .then((res) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(res.data);
+        setSrc(objectUrl);
+      })
+      .catch(() => {
+        if (!cancelled) setSrc(null);
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [businessSlug]);
+
+  return src;
+}
+
+// function businessLogo(businessSlug) {
+//   const src = useAuthLogo(businessSlug);
+//   if (!src) return null;
+//   return (
+//     <img
+//       src={src}
+//       alt={`${businessSlug} logo`}
+//       className="service-logo"
+//     />
+//   );
+// }
+
+// ── Service logo component ─────────────────────────────────────────────────
+function ServiceLogo({ businessSlug, title, logoUrl }) {
+  const authSrc = useAuthLogo(businessSlug);
+  const finalSrc = logoUrl || authSrc;
+
+  if (!finalSrc) return null;
+
+  return (
+    <img
+      src={finalSrc}
+      alt={`${title} logo`}
+      className="service-logo"
+      onError={(e) => {
+        // If logoUrl failed, try authSrc if we haven't already
+        if (logoUrl && authSrc && e.target.src !== authSrc) {
+          e.target.src = authSrc;
+        } else {
+          e.target.style.display = 'none';
+        }
+      }}
+    />
+  );
+}
 
 // ── Payment Success Toast ──────────────────────────────────────────────────
 function PaymentSuccessToast({ bookingId, onDismiss }) {
@@ -110,10 +177,6 @@ export default function AIReservationCRM() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ── Detect Stripe success redirect ────────────────────────────────────
-  // Your backend success_url should be:
-  //   https://YOUR-FRONTEND.com/?payment=success&booking_id={BOOKING_ID}
-  // OR: https://YOUR-FRONTEND.com/customerservice/{slug}?payment=success&booking_id={id}
   const searchParams = new URLSearchParams(location.search);
   const paymentStatus = searchParams.get('payment');
   const returnBookingId = searchParams.get('booking_id');
@@ -122,7 +185,6 @@ export default function AIReservationCRM() {
 
   useEffect(() => {
     if (paymentStatus === 'success') {
-      // Clean up the URL so refresh doesn't re-trigger the toast
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -196,7 +258,6 @@ export default function AIReservationCRM() {
   return (
     <div className="ai-reservation-container">
 
-      {/* Payment success toast */}
       {showSuccessToast && (
         <PaymentSuccessToast
           bookingId={returnBookingId}
@@ -242,7 +303,7 @@ export default function AIReservationCRM() {
             <AlertCircle size={15} />
             <span>{error}</span>
           </div>
-        )}
+        )} <hr style={{ backgroundColor: 'black', height: '1px' }} />
 
         {/* ── Search ── */}
         <div
@@ -255,9 +316,9 @@ export default function AIReservationCRM() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              width: '50%',         // ← 50% of page
-              minWidth: '280px',    // ← safe on mobile
-              maxWidth: '640px',    // ← don't go too wide on ultrawide
+              width: '50%',
+              minWidth: '280px',
+              maxWidth: '640px',
             }}
           >
             <Search className="search-icon" />
@@ -285,6 +346,14 @@ export default function AIReservationCRM() {
                 <div key={service.id} className="service-card">
                   <div className="service-content">
                     <div className="service-header">
+                      {/* ── Authenticated logo — fetched via axios, not <img src> ── */}
+                      {service.business_slug && (
+                        <ServiceLogo
+                          businessSlug={service.business_slug}
+                          title={service.title}
+                          logoUrl={service.logo_url}
+                        />
+                      )}
                       {service.badge && (
                         <span className="service-badge">{service.badge}</span>
                       )}

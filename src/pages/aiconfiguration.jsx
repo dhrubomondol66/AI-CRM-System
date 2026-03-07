@@ -365,6 +365,7 @@ export default function AIConfiguration() {
                   key={b.id}
                   className={`service-card ${selectedBusinessId === b.id ? 'service-card--selected' : ''}`}
                   onClick={() => setSelectedBusinessId(b.id)}
+                  style={{ cursor: 'pointer', gap: '0.5rem' }}
                 >
                   {selectedBusinessId === b.id && <span className="service-card-check"><CheckCircle size={18} /></span>}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: '22px' }}>

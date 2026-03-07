@@ -14,6 +14,27 @@ const LandingHeader = () => {
       contactSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
+  const handleAboutClick = (e) => {
+    const aboutSection = document.querySelector('.footer');
+    if (aboutSection) {
+      e.preventDefault();
+      aboutSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  const handleReviewsClick = (e) => {
+    const reviewsSection = document.querySelector('.review-section');
+    if (reviewsSection) {
+      e.preventDefault();
+      reviewsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  const handleBookingStatusClick = (e) => {
+    const bookingStatusSection = document.querySelector('.booking-status');
+    if (bookingStatusSection) {
+      e.preventDefault();
+      bookingStatusSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   return (
     <header className="landing-header">
       <div className="container landing-header-content">
@@ -22,10 +43,11 @@ const LandingHeader = () => {
           <span className='landing-header-title'>{platformName}</span>
         </div>
         <div className='landing-nav-links'>
-          <li><Link to={`/customerservices/`}   >Services</Link></li>
-          <li><Link to="/how-it-works"   >How It Works</Link></li>
-          {/* <li><Link to="/booking-status"   >Booking Status</Link></li> */}
-          <li><Link to="/" state={{ scrollTo: 'contact' }} onClick={handleContactClick}>Contact</Link></li>
+          <li><Link to={`/customerservices/`}>Services</Link></li>
+          <li><Link to="/" onClick={handleBookingStatusClick}>Booking Status</Link></li>
+          <li><Link to="/" onClick={handleReviewsClick}>Reviews</Link></li>
+          <li><Link to="/" onClick={handleContactClick}>Contact</Link></li>
+          <li><Link to="/" onClick={handleAboutClick}>About</Link></li>
         </div>
         <div className='landing-buttons'>
           <Link to="/adminlogin">
