@@ -392,7 +392,7 @@ export default function Analytics() {
             <h1 className="dashboard-title">Dashboard Analytics</h1>
             {lastSync && <p className="an-last-sync" style={{ textAlign: 'left' }}>Updated {lastSync.toLocaleTimeString()}</p>}
           </div>
-          <div style={{ position: 'relative' }}>
+          {/* <div style={{ position: 'relative' }}>
             <button className="date-filter-btn" onClick={() => setShowFilter(v => !v)}>
               <Calendar size={15} style={{ marginRight: '8px' }} />
               <span>{dateFilter === 'CustomRange' ? 'Custom Range' : dateFilter}</span>
@@ -441,7 +441,7 @@ export default function Analytics() {
                 )}
               </div>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* ── 6 Stat cards ── */}
