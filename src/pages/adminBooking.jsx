@@ -41,10 +41,10 @@ const httpErrorMsg = (err) => {
 // ── Status config ──────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   PENDING_PAYMENT: { bg: '#fef3c7', color: '#92400e', label: 'Pending Payment' },
-  INITIATED:       { bg: '#dbeafe', color: '#1e40af', label: 'Initiated' },
-  CONFIRMED:       { bg: '#d1fae5', color: '#065f46', label: 'Confirmed' },
-  CANCELLED:       { bg: '#fee2e2', color: '#991b1b', label: 'Cancelled' },
-  EXPIRED:         { bg: '#f3f4f6', color: '#6b7280', label: 'Expired' },
+  INITIATED: { bg: '#dbeafe', color: '#1e40af', label: 'Initiated' },
+  CONFIRMED: { bg: '#d1fae5', color: '#065f46', label: 'Confirmed' },
+  CANCELLED: { bg: '#fee2e2', color: '#991b1b', label: 'Cancelled' },
+  EXPIRED: { bg: '#f3f4f6', color: '#6b7280', label: 'Expired' },
 };
 
 const getStatusStyle = (s) => STATUS_CONFIG[s] ?? { bg: '#f3f4f6', color: '#374151', label: s };
@@ -79,18 +79,18 @@ const PAGE_SIZE = 10;
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function Bookings() {
-  const [activeTab, setActiveTab]     = useState('All');
+  const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [bookings, setBookings]       = useState([]);
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState(null);
-  const [page, setPage]               = useState(1);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
   const [stats, setStats] = useState({
-    total_bookings:  0,
+    total_bookings: 0,
     pending_payment: 0,
-    confirmed:       0,
-    cancelled:       0,
-    expired:         0,
+    confirmed: 0,
+    cancelled: 0,
+    expired: 0,
   });
 
   const tabs = ['All', 'INITIATED', 'PENDING_PAYMENT', 'CONFIRMED', 'CANCELLED', 'EXPIRED'];
@@ -108,24 +108,24 @@ export default function Bookings() {
       const d = response.data?.data ?? response.data ?? {};
 
       setStats({
-        total_bookings:  d.total_bookings  ?? 0,
+        total_bookings: d.total_bookings ?? 0,
         pending_payment: d.pending_payment ?? 0,
-        confirmed:       d.confirmed       ?? 0,
-        cancelled:       d.cancelled       ?? 0,
-        expired:         d.expired         ?? 0,
+        confirmed: d.confirmed ?? 0,
+        cancelled: d.cancelled ?? 0,
+        expired: d.expired ?? 0,
       });
 
       const raw = Array.isArray(d.bookings) ? d.bookings : [];
       setBookings(raw.map((b) => ({
-        id:         b.booking_id         ?? b.id ?? '—',
+        id: b.booking_id ?? b.id ?? '—',
         trackingId: b.public_tracking_id ?? '—',
-        customer:   b.customer_name      ?? 'Guest',
-        phone:      b.customer_phone     ?? '—',
-        email:      b.customer_email     ?? '—',
-        service:    b.service_name       ?? '—',
-        slotStart:  b.slot_start         ?? null,
-        status:     b.status             ?? '—',
-        createdAt:  b.created_at         ?? null,
+        customer: b.customer_name ?? 'Guest',
+        phone: b.customer_phone ?? '—',
+        email: b.customer_email ?? '—',
+        service: b.service_name ?? '—',
+        slotStart: b.slot_start ?? null,
+        status: b.status ?? '—',
+        createdAt: b.created_at ?? null,
       })));
 
       setPage(1);
@@ -152,7 +152,7 @@ export default function Bookings() {
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="bookings-container">
@@ -262,8 +262,10 @@ export default function Bookings() {
             <div className="bookings-table">
               <div className="bookings-table-header">
                 <div className="bookings-th">CUSTOMER</div>
+                <div className="bookings-th">PHONE</div>
                 <div className="bookings-th">SERVICE</div>
                 <div className="bookings-th">SLOT</div>
+                <div className="bookings-th">BOOKED ON</div>
                 <div className="bookings-th">BOOKING ID</div>
                 <div className="bookings-th">STATUS</div>
               </div>
@@ -275,9 +277,10 @@ export default function Bookings() {
               )}
 
               {paginated.map((b) => {
-                const slot        = formatSlot(b.slotStart);
+                const slot = formatSlot(b.slotStart);
+                const created = formatSlot(b.createdAt);
                 const statusStyle = getStatusStyle(b.status);
-                const initials    = getInitials(b.customer !== 'Guest' ? b.customer : null);
+                const initials = getInitials(b.customer !== 'Guest' ? b.customer : null);
                 const avatarColor = getAvatarColor(b.customer);
 
                 return (
@@ -291,13 +294,18 @@ export default function Bookings() {
                       </div>
                       <div className="customer-info">
                         <div className="customer-name">{b.customer}</div>
-                        <div className="customer-phone">{b.phone}</div>
+                        <div className="customer-email" style={{ fontSize: '0.7rem', color: '#64748b' }}>{b.email}</div>
                       </div>
                     </div>
+                    <div className="bookings-td" style={{ fontSize: '0.875rem', fontWeight: '500' }}>{b.phone}</div>
                     <div className="bookings-td" style={{ fontSize: '0.875rem' }}>{b.service}</div>
                     <div className="bookings-td">
                       <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>{slot.date}</div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{slot.time}</div>
+                    </div>
+                    <div className="bookings-td">
+                      <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>{created.date}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{created.time}</div>
                     </div>
                     <div className="bookings-td">
                       <span style={{ fontFamily: 'monospace', fontWeight: '600', fontSize: '0.8rem', color: '#2563eb' }}>

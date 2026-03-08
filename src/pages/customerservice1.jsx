@@ -11,6 +11,7 @@ import sending from '../assets/sending.png';
 import axios from 'axios';
 import { Device } from '@twilio/voice-sdk';
 import VoiceCallModal from '../components/VoiceCallModal';
+
 // ── Axios instance ──────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
@@ -52,10 +53,10 @@ const normalizeService = (item, i) => {
 // ── Call state enum ────────────────────────────────────────────────────────
 const CALL_STATE = {
   IDLE: 'idle',
-  CONNECTING: 'connecting',   // fetching token & registering device
-  RINGING: 'ringing',      // outbound call placed, waiting for answer
+  CONNECTING: 'connecting',
+  RINGING: 'ringing',
   IN_CALL: 'in-call',
-  ENDED: 'ended',        // shown briefly before reset to IDLE
+  ENDED: 'ended',
 };
 
 // ── Format mm:ss ────────────────────────────────────────────────────────────
@@ -101,11 +102,6 @@ function PaymentOptionsCard({ bookingId, paymentUrl, onPayLater }) {
 }
 
 // ── useTwilioVoice hook ────────────────────────────────────────────────────
-//
-//  • Only initialises the Twilio Device when the user actually clicks "Start Call".
-//  • Cleans up on unmount.
-//  • Exposes: callState, startCall, endCall, isMuted, toggleMute, callDuration, error
-//
 function useTwilioVoice({ business_slug, selectedService, sessionId }) {
   const deviceRef = useRef(null);
   const callRef = useRef(null);
@@ -115,7 +111,7 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
   const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState(null);
-  // Clean up on unmount
+
   useEffect(() => () => {
     clearInterval(timerRef.current);
     deviceRef.current?.destroy();
@@ -127,7 +123,6 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
   };
   const stopTimer = () => { clearInterval(timerRef.current); timerRef.current = null; };
 
-  // Create (or recreate) the Twilio Device and register it
   const initDevice = useCallback(async () => {
     deviceRef.current?.destroy();
     deviceRef.current = null;
@@ -154,7 +149,6 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
       stopTimer();
     });
 
-    // Silently refresh token before it expires so long calls don't drop
     device.on('tokenWillExpire', async () => {
       try {
         const r = await api.post('/api/v1/voice/twilio/', {
@@ -171,10 +165,8 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
     return device;
   }, [business_slug, selectedService, sessionId]);
 
-  // Wire all lifecycle events onto the active Call object
   const attachCallHandlers = (call) => {
     callRef.current = call;
-
     call.on('ringing', () => setCallState(CALL_STATE.RINGING));
     call.on('accept', () => { setCallState(CALL_STATE.IN_CALL); setIsMuted(false); startTimer(); });
     call.on('disconnect', () => {
@@ -232,44 +224,36 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
   return { callState, startCall, endCall, isMuted, toggleMute, callDuration, error };
 }
 
+// ── Star SVG helper ────────────────────────────────────────────────────────
+function StarIcon({ filled, size = 10 }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={filled ? '#f59e0b' : 'none'}
+      stroke="#f59e0b"
+      strokeWidth="2"
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
 // ── CallButton component ───────────────────────────────────────────────────
 function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCall }) {
   const { callState, startCall, endCall, isMuted, toggleMute, callDuration, error } =
     useTwilioVoice({ business_slug, selectedService, sessionId });
 
   const isActive = callState === CALL_STATE.IN_CALL;
-  const isBusy = callState === CALL_STATE.CONNECTING || callState === CALL_STATE.RINGING;
-  const isIdle = callState === CALL_STATE.IDLE || callState === CALL_STATE.ENDED;
-
-  const handleMainClick = () => {
-    if (isIdle) startCall();
-    else if (isActive || isBusy) endCall();
-  };
-
-  // Visual config per state
-  const stateConfig = {
-    [CALL_STATE.IDLE]: { label: 'Start Call', bg: '#10b981', icon: 'phone' },
-    [CALL_STATE.CONNECTING]: { label: 'Connecting…', bg: '#64748b', icon: 'loading' },
-    [CALL_STATE.RINGING]: { label: 'Ringing…', bg: '#f59e0b', icon: 'loading' },
-    [CALL_STATE.IN_CALL]: { label: 'End Call', bg: '#ef4444', icon: 'phone-off' },
-    [CALL_STATE.ENDED]: { label: 'Call Ended', bg: '#64748b', icon: 'phone' },
-  };
-  const { label, bg, icon } = stateConfig[callState] ?? stateConfig[CALL_STATE.IDLE];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-
-      {/* Error banner */}
       {error && (
-        <span style={{
-          fontSize: '0.68rem', color: '#ef4444', maxWidth: '200px',
-          textAlign: 'right', lineHeight: 1.3,
-        }}>
+        <span style={{ fontSize: '0.68rem', color: '#ef4444', maxWidth: '200px', textAlign: 'right', lineHeight: 1.3 }}>
           ⚠ {error}
         </span>
       )}
-
-      {/* In-call: duration timer + mute toggle */}
       {isActive && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{
@@ -279,7 +263,6 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
           }}>
             🔴 {formatDuration(callDuration)}
           </span>
-
           <button
             onClick={toggleMute}
             title={isMuted ? 'Unmute' : 'Mute mic'}
@@ -296,13 +279,15 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
           </button>
         </div>
       )}
-
-      {/* Main call button */}
-      <button className="start-call-btn" onClick={() => { if (!selectedService) { alert('Select a service first'); return; } setShowVoiceCall(true); }}>
+      <button
+        className="start-call-btn"
+        onClick={() => {
+          if (!selectedService) { alert('Select a service first'); return; }
+          setShowVoiceCall(true);
+        }}
+      >
         <Phone className="phone-icon" /> Start Call
       </button>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -333,6 +318,12 @@ export default function BookingAssistant() {
   const [detectedBookingId, setDetectedBookingId] = useState(null);
   const [showVoiceCall, setShowVoiceCall] = useState(false);
 
+  // ── Reviews state ────────────────────────────────────────────────────────
+  const [reviews, setReviews] = useState([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
   const chatEndRef = useRef(null);
 
   const business = services.length > 0
@@ -340,7 +331,7 @@ export default function BookingAssistant() {
       business_slug: services[0].business_slug || services[0].slug || business_slug,
       name: services[0].business_name,
       service_type_name: services[0].business_type,
-      logo_url: services[0].logo_url
+      logo_url: services[0].logo_url,
     }
     : null;
 
@@ -379,6 +370,49 @@ export default function BookingAssistant() {
     fetchServices();
   }, [business_slug]);
 
+  // ── Fetch reviews when service selected ─────────────────────────────────
+  useEffect(() => {
+    if (!selectedService || !business_slug) return;
+
+    // Reset on every service switch
+    setReviews([]);
+    setAvgRating(0);
+    setTotalReviews(0);
+
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        // Try service-specific reviews first
+        const res = await api.get(
+          `/api/v1/public/reviews/service/${selectedService.id}`,
+          { params: { limit: 50, offset: 0 } }
+        );
+        setReviews(res.data?.reviews ?? []);
+        setAvgRating(res.data?.average_rating ?? 0);
+        setTotalReviews(res.data?.total_reviews ?? 0);
+      } catch {
+        try {
+          // Fall back to business-level reviews
+          const res = await api.get(
+            `/api/v1/public/reviews/business/${business_slug}`,
+            { params: { limit: 50, offset: 0 } }
+          );
+          setReviews(res.data?.reviews ?? []);
+          setAvgRating(res.data?.average_rating ?? 0);
+          setTotalReviews(res.data?.total_reviews ?? 0);
+        } catch {
+          setReviews([]);
+          setAvgRating(0);
+          setTotalReviews(0);
+        }
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [selectedService, business_slug]);
+
   // ── Start conversation when a service is selected ────────────────────────
   useEffect(() => {
     if (!selectedService || !business_slug) return;
@@ -391,7 +425,7 @@ export default function BookingAssistant() {
       try {
         const res = await api.post('/api/v1/chat/conversations', {
           business_slug,
-          service_name: selectedService.title,   // backend resolves to ID
+          service_name: selectedService.title,
           user_session_id: sessionId,
           channel: 'CHAT',
         });
@@ -494,7 +528,9 @@ export default function BookingAssistant() {
     }
   };
 
-  const handleKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } };
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
+  };
 
   const handleServiceSelect = (service) => { setSelectedService(service); setProgress(65); };
 
@@ -537,7 +573,7 @@ export default function BookingAssistant() {
                   )}
                 </div>
                 <div>
-                  <h2 className="card-title" style={{ fontSize: '1.25rem', textAlign:'right' }}>
+                  <h2 className="card-title" style={{ fontSize: '1.25rem', textAlign: 'right' }}>
                     {servicesLoading ? 'Loading...' : (business?.name || 'Booking Inquiry')}
                   </h2>
                   <p className="card-subtitle" style={{ textAlign: 'right' }}>
@@ -546,14 +582,45 @@ export default function BookingAssistant() {
                 </div>
               </div>
 
+              {/* ── Booking Details ── */}
               <div className="booking-details">
-                <div className="section-title-small" style={{ marginBottom: '0.75rem', fontWeight: '600', color: '#1e293b' }}>
-                  AVAILABLE SERVICES
+
+                {/* Header row: title + avg star rating badge */}
+                <div style={{
+                  display: 'flex', alignItems: 'center',
+                  justifyContent: 'space-between', marginBottom: '0.75rem',
+                }}>
+                  <div className="section-title-small" style={{ fontWeight: '600', color: '#1e293b' }}>
+                    AVAILABLE SERVICES
+                  </div>
+
+                  {/* Average Rating Badge — only when avgRating > 0 and service selected */}
+                  {avgRating > 0 && selectedService && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      background: '#fffbeb', border: '1px solid #fde68a',
+                      borderRadius: '20px', padding: '3px 10px', flexShrink: 0,
+                    }}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <StarIcon key={s} filled={avgRating >= s} size={11} />
+                      ))}
+                      <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#92400e', marginLeft: '2px' }}>
+                        {Number(avgRating).toFixed(1)}
+                      </span>
+                      <span style={{ fontSize: '0.65rem', color: '#a16207' }}>
+                        ({totalReviews})
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {error && <p style={{ fontSize: '0.875rem', color: '#ef4444' }}>{error}</p>}
 
-                <div className="services-list-mini" style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '1rem', color: 'black', backgroundColor: 'white' }}>
+                {/* Services list */}
+                <div
+                  className="services-list-mini"
+                  style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '1rem', color: 'black', backgroundColor: 'white' }}
+                >
                   {servicesLoading ? (
                     <p style={{ fontSize: '0.875rem' }}>Loading services...</p>
                   ) : services.length === 0 && !error ? (
@@ -579,6 +646,7 @@ export default function BookingAssistant() {
                   )}
                 </div>
 
+                {/* Selected service details */}
                 {selectedService && (
                   <>
                     <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
@@ -608,7 +676,105 @@ export default function BookingAssistant() {
                     )}
                   </>
                 )}
-              </div>
+
+                {/* ── Reviews Section ── */}
+                {selectedService && (
+                  <>
+                    <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid #e2e8f0' }} />
+
+                    <div style={{
+                      fontWeight: '600', fontSize: '0.75rem', color: '#1e293b',
+                      letterSpacing: '0.05em', marginBottom: '0.6rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    }}>
+                      <span>CUSTOMER REVIEWS</span>
+                      {totalReviews > 0 && (
+                        <span style={{ fontSize: '0.65rem', fontWeight: '500', color: '#64748b' }}>
+                          {totalReviews} review{totalReviews !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+
+                    {reviewsLoading ? (
+                      <p style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                        Loading reviews...
+                      </p>
+                    ) : reviews.length === 0 ? (
+                      <p style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                        No reviews yet. Be the first!
+                      </p>
+                    ) : (
+                      <div style={{
+                        display: 'flex', flexDirection: 'column', gap: '0.6rem',
+                        maxHeight: '260px', overflowY: 'auto', paddingRight: '2px',
+                      }}>
+                        {reviews.map((review, i) => {
+                          const name = review.reviewer_name ?? review.name ?? 'Anonymous';
+                          const initial = name[0].toUpperCase();
+                          const hue = (name.charCodeAt(0) * 37) % 360;
+
+                          return (
+                            <div key={review.id ?? i} style={{
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '10px',
+                              padding: '0.65rem 0.75rem',
+                            }}>
+                              {/* Top row: avatar + name + stars */}
+                              <div style={{
+                                display: 'flex', alignItems: 'center',
+                                justifyContent: 'space-between', marginBottom: '6px',
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                                  {/* Coloured avatar initial */}
+                                  <div style={{
+                                    width: '26px', height: '26px', borderRadius: '50%',
+                                    background: `hsl(${hue}, 55%, 60%)`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '0.65rem', fontWeight: '700', color: 'white', flexShrink: 0,
+                                  }}>
+                                    {initial}
+                                  </div>
+                                  <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1e293b' }}>
+                                    {name}
+                                  </span>
+                                </div>
+
+                                {/* Star rating */}
+                                <div style={{ display: 'flex', gap: '1px' }}>
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <StarIcon key={s} filled={(review.rating ?? 0) >= s} size={10} />
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Comment */}
+                              {review.comment && (
+                                <p style={{
+                                  fontSize: '0.75rem', color: '#475569',
+                                  lineHeight: '1.45', margin: '0 0 4px 0',
+                                }}>
+                                  "{review.comment}"
+                                </p>
+                              )}
+
+                              {/* Date */}
+                              {(review.created_at ?? review.date) && (
+                                <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0 }}>
+                                  {new Date(review.created_at ?? review.date).toLocaleDateString('en-US', {
+                                    month: 'short', day: 'numeric', year: 'numeric',
+                                  })}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+
+              </div>{/* end booking-details */}
 
               <div className="progress-section">
                 <div className="progress-header">
@@ -649,12 +815,6 @@ export default function BookingAssistant() {
                   </div>
                 </div>
 
-                {/*
-                  ── CallButton ──────────────────────────────────────────────
-                  Passes the currently-selected service so the Twilio token
-                  request can include context.  If no service is selected yet
-                  the button is disabled with a tooltip.
-                */}
                 <div title={!selectedService ? 'Select a service to enable voice call' : undefined}>
                   <CallButton
                     business_slug={business_slug}
@@ -694,8 +854,9 @@ export default function BookingAssistant() {
                 {chatMessages.map((msg, idx) => (
                   <div key={idx} className={`message-group ${msg.role === 'user' ? 'user-group' : ''}`}>
                     <div className={`message ${msg.role === 'user' ? 'user-message' : 'assistant-message'}`}>
-                      {msg.role === 'assistant' && <div className="message-avatar"><div className="avatar-small" /></div>}
-
+                      {msg.role === 'assistant' && (
+                        <div className="message-avatar"><div className="avatar-small" /></div>
+                      )}
                       {msg.type === 'payment_options' ? (
                         <div className="message-bubble" style={{ padding: 0, overflow: 'hidden' }}>
                           <PaymentOptionsCard
@@ -717,7 +878,9 @@ export default function BookingAssistant() {
                   <div className="message-group">
                     <div className="message assistant-message">
                       <div className="message-avatar"><div className="avatar-small" /></div>
-                      <div className="message-bubble" style={{ color: '#94a3b8', fontStyle: 'italic' }}>Typing...</div>
+                      <div className="message-bubble" style={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                        Typing...
+                      </div>
                     </div>
                   </div>
                 )}
@@ -726,7 +889,9 @@ export default function BookingAssistant() {
                   <div className="message-group">
                     <div className="message assistant-message">
                       <div className="message-avatar"><div className="avatar-small" /></div>
-                      <div className="message-bubble" style={{ color: '#94a3b8', fontStyle: 'italic' }}>Generating payment options...</div>
+                      <div className="message-bubble" style={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                        Generating payment options...
+                      </div>
                     </div>
                   </div>
                 )}
@@ -781,4 +946,4 @@ export default function BookingAssistant() {
   );
 }
 
-export { };   // no ActionButtons export needed — removed unused component
+export { };

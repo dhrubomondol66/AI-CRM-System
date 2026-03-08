@@ -59,10 +59,11 @@
     flex: 1;
     width: calc(100% - 270px);
     transition: all var(--transition-base);
+    box-sizing: border-box;
 }
 
 /* ===================================
-   NAVBAR - ENHANCED
+   NAVBAR
    =================================== */
 
 .navbar {
@@ -90,15 +91,8 @@
 }
 
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .navbar-title {
@@ -132,15 +126,8 @@
 }
 
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ===================================
@@ -172,26 +159,15 @@
     border-radius: 2px;
 }
 
+/* ── Business Cards Grid — desktop default: 3 columns ── */
 .business-cards-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
 }
 
-@media (min-width: 768px) {
-    .business-cards-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1200px) {
-    .business-cards-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
 /* ===================================
-   BUSINESS CARD - REFINED
+   BUSINESS CARD
    =================================== */
 
 .business-card {
@@ -202,8 +178,8 @@
     box-shadow: var(--shadow-md);
     transition: all var(--transition-base);
     position: relative;
-    /* overflow: hidden; */
     animation: cardFadeIn 0.5s ease-out backwards;
+    box-sizing: border-box;
 }
 
 .business-card::before {
@@ -217,6 +193,7 @@
     transform: scaleX(0);
     transform-origin: left;
     transition: transform var(--transition-slow);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .business-card:hover {
@@ -230,40 +207,16 @@
 }
 
 @keyframes cardFadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
 }
 
-.business-card:nth-child(1) {
-    animation-delay: 0.05s;
-}
-
-.business-card:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.business-card:nth-child(3) {
-    animation-delay: 0.15s;
-}
-
-.business-card:nth-child(4) {
-    animation-delay: 0.2s;
-}
-
-.business-card:nth-child(5) {
-    animation-delay: 0.25s;
-}
-
-.business-card:nth-child(6) {
-    animation-delay: 0.3s;
-}
+.business-card:nth-child(1) { animation-delay: 0.05s; }
+.business-card:nth-child(2) { animation-delay: 0.10s; }
+.business-card:nth-child(3) { animation-delay: 0.15s; }
+.business-card:nth-child(4) { animation-delay: 0.20s; }
+.business-card:nth-child(5) { animation-delay: 0.25s; }
+.business-card:nth-child(6) { animation-delay: 0.30s; }
 
 .business-card-head {
     display: flex;
@@ -277,7 +230,7 @@
 
 .business-card-title {
     margin: 0 0 0.5rem 0;
-    font-size: 1.35rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--color-gray-900);
     line-height: 1.3;
@@ -298,7 +251,6 @@
     width: fit-content;
 }
 
-/* Business card content area */
 .business-card-content {
     display: flex;
     flex-direction: column;
@@ -312,7 +264,6 @@
     font-size: 0.9rem;
 }
 
-/* Business card info fields */
 .business-card-info {
     display: flex;
     flex-direction: column;
@@ -338,13 +289,30 @@
     font-size: 0.875rem;
     color: var(--color-gray-800);
     line-height: 1.5;
+    word-break: break-word;
 }
 
-/* Service input and chips section */
+/* ===================================
+   SERVICE SECTION
+   =================================== */
+
 .service-section {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--color-gray-100);
+}
+
+.service-section-view {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-gray-100);
+}
+
+.services-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-700);
+    margin: 0 0 0.75rem 0;
 }
 
 .service-input-wrapper {
@@ -363,6 +331,7 @@
     transition: all var(--transition-base);
     background-color: white;
     color: var(--color-gray-700);
+    min-width: 0;
 }
 
 .service-input:focus {
@@ -385,6 +354,7 @@
     cursor: pointer;
     transition: all var(--transition-base);
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .add-service-btn:hover {
@@ -399,7 +369,6 @@
     transform: none;
 }
 
-/* Service chips */
 .service-chips {
     display: flex;
     flex-wrap: wrap;
@@ -423,19 +392,9 @@
 }
 
 @keyframes chipPop {
-    0% {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
+    0%   { opacity: 0; transform: scale(0.8); }
+    50%  { transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 .chip-removable {
@@ -469,6 +428,19 @@
     background: rgba(239, 68, 68, 0.2);
 }
 
+.no-services-text {
+    font-size: 0.8rem;
+    color: var(--color-gray-400);
+    font-style: italic;
+    margin: 0;
+}
+
+.svc-error-text {
+    font-size: 0.8rem;
+    color: var(--color-danger);
+    margin: 0 0 0.5rem 0;
+}
+
 /* ===================================
    CARD ACTIONS
    =================================== */
@@ -477,6 +449,7 @@
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 .card-btn {
@@ -562,50 +535,31 @@
 }
 
 @keyframes expandDown {
-    from {
-        opacity: 0;
-        max-height: 0;
-    }
-
-    to {
-        opacity: 1;
-        max-height: 1000px;
-    }
+    from { opacity: 0; max-height: 0; }
+    to   { opacity: 1; max-height: 2000px; }
 }
 
+/* ── Edit grid: 2-column by default, full-width items span both ── */
 .edit-grid {
-    display: contents;
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
 
-@media (min-width: 768px) and (max-width: 1024px) {
-    .business-cards-grid {
-        grid-template-columns: 50% 50%;
-        gap: 1rem;
-    }
-}
-
-@media (min-width: 700px) {
-    .edit-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .edit-grid .full {
-        grid-column: 1 / -1;
-    }
+.edit-field.full {
+    grid-column: 1 / -1;
 }
 
 .edit-field {
-    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
 }
 
 .edit-field label {
-    display: contents;
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--color-gray-700);
-    margin-bottom: 0.5rem;
 }
 
 .edit-field input,
@@ -613,12 +567,13 @@
     width: 100%;
     border: 1.5px solid var(--color-gray-200);
     border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.85rem;
     outline: none;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     transition: all var(--transition-base);
     background: #ffffff;
     color: #000;
+    box-sizing: border-box;
 }
 
 .edit-field input:focus,
@@ -635,30 +590,7 @@
 }
 
 /* ===================================
-   SERVICES AREA - ENHANCED
-   =================================== */
-
-.services-area {
-    margin-top: 1.25rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--color-gray-100);
-}
-
-.add-service-row {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-}
-
-.service-chips.editable {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-/* ===================================
-   FORM CARD - POLISHED
+   FORM CARD
    =================================== */
 
 .form-card {
@@ -670,6 +602,7 @@
     position: relative;
     overflow: hidden;
     animation: fadeInUp 0.7s ease-out;
+    box-sizing: border-box;
 }
 
 .form-card::before {
@@ -694,32 +627,14 @@
     animation: slideInLeft 0.5s ease-out backwards;
 }
 
-.form-group:nth-child(1) {
-    animation-delay: 0.05s;
-}
-
-.form-group:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.form-group:nth-child(3) {
-    animation-delay: 0.15s;
-}
-
-.form-group:nth-child(4) {
-    animation-delay: 0.2s;
-}
+.form-group:nth-child(1) { animation-delay: 0.05s; }
+.form-group:nth-child(2) { animation-delay: 0.10s; }
+.form-group:nth-child(3) { animation-delay: 0.15s; }
+.form-group:nth-child(4) { animation-delay: 0.20s; }
 
 @keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
 .form-group label {
@@ -744,6 +659,7 @@
     outline: none;
     transition: all var(--transition-base);
     font-family: inherit;
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -765,74 +681,7 @@
 }
 
 /* ===================================
-   CUSTOM SERVICE BOX
-   =================================== */
-
-.custom-service-box {
-    margin-top: 1rem;
-    padding: 1.25rem;
-    background: var(--color-gray-50);
-    border-radius: var(--radius-lg);
-    border: 1px dashed var(--color-gray-300);
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    animation: expandDown 0.3s ease-out;
-}
-
-.custom-service-box label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-gray-700);
-}
-
-.custom-service-box input {
-    background-color: #ffffff;
-    border: 1.5px solid var(--color-gray-200);
-    border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    outline: none;
-    transition: all var(--transition-base);
-    color: var(--color-gray-700);
-}
-
-.custom-service-box input:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.mini-btn {
-    width: fit-content;
-    padding: 0.625rem 1.25rem;
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--color-primary);
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-base);
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-}
-
-.mini-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.mini-btn:hover:not(:disabled) {
-    background: var(--color-primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
-}
-
-.mini-btn:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-/* ===================================
-   FOOTER BUTTONS - ENHANCED
+   FOOTER BUTTONS
    =================================== */
 
 .footer-buttons {
@@ -884,9 +733,7 @@
     transform: translateY(-2px);
 }
 
-.submit-btn:active {
-    transform: translateY(0);
-}
+.submit-btn:active { transform: translateY(0); }
 
 .submit-btn:disabled {
     opacity: 0.6;
@@ -909,7 +756,7 @@
 }
 
 /* ===================================
-   ERROR MESSAGE
+   ERROR / LOADING
    =================================== */
 
 .error-message {
@@ -923,11 +770,7 @@
     font-weight: 500;
 }
 
-/* ===================================
-   LOADING STATE
-   =================================== */
-
-.loading-message {
+.loading-text {
     text-align: center;
     padding: 2rem;
     color: var(--color-gray-600);
@@ -935,7 +778,7 @@
 }
 
 /* ===================================
-   WHAT HAPPENS NEXT CARD
+   WHAT HAPPENS NEXT
    =================================== */
 
 .what-happens-next-card {
@@ -1014,13 +857,42 @@
 }
 
 /* ===================================
-   RESPONSIVE DESIGN
+   SKELETON
    =================================== */
 
-@media (max-width: 1023px) {
+@keyframes shimmer {
+    0%   { background-position: -1000px 0; }
+    100% { background-position:  1000px 0; }
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+    border-radius: var(--radius-md);
+}
+
+/* ===================================
+   RESPONSIVE — TABLET (768px – 1199px)
+   =================================== */
+
+/* Large tablet / small laptop: sidebar still visible at ~270px */
+@media (min-width: 1024px) and (max-width: 1199px) {
+    .business-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .add-business-content {
+        padding: 1.75rem;
+    }
+}
+
+/* Tablet landscape (768px – 1023px): sidebar collapses to icon-only (~70px) */
+@media (min-width: 768px) and (max-width: 1023px) {
     .add-business-content {
         margin-left: 70px;
-        width: 100%;
+        width: calc(100% - 70px);
         padding: 1.5rem;
     }
 
@@ -1031,20 +903,105 @@
     }
 
     .navbar-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+    }
+
+    /* Cards: 2 columns on tablet landscape */
+    .business-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    /* Edit grid collapses to single column on tablet so fields aren't cramped */
+    .edit-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .edit-field.full {
+        grid-column: 1;
     }
 
     .form-card {
         padding: 2rem;
     }
 
-    .business-cards-grid {
-        grid-template-columns: 1fr;
+    .business-card {
+        padding: 1.5rem;
+    }
+
+    .business-card-title {
+        font-size: 1rem;
+    }
+
+    /* Card head: stack vertically when content is tight */
+    .business-card-head {
+        flex-wrap: wrap;
+    }
+
+    .card-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
 
-@media (max-width: 768px) {
+/* Tablet portrait (600px – 767px) */
+@media (min-width: 600px) and (max-width: 767px) {
     .add-business-content {
+        margin-left: 70px;
+        width: calc(100% - 70px);
+        padding: 1.25rem;
+    }
+
+    .navbar {
+        margin: -1.25rem -1.25rem 1.25rem -1.25rem;
+        width: calc(100% + 2.5rem);
+        padding: 1rem 1.25rem;
+    }
+
+    .navbar-title {
+        font-size: 1.25rem;
+    }
+
+    /* Single column cards on portrait tablet */
+    .business-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    /* Single column edit grid */
+    .edit-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .edit-field.full {
+        grid-column: 1;
+    }
+
+    .form-card {
+        padding: 1.75rem;
+    }
+
+    .business-card {
+        padding: 1.25rem;
+    }
+
+    .info-row {
+        grid-template-columns: 90px 1fr;
+    }
+
+    .service-input-wrapper {
+        flex-direction: row;
+    }
+}
+
+/* ===================================
+   RESPONSIVE — MOBILE (< 600px)
+   =================================== */
+
+@media (max-width: 599px) {
+    .add-business-content {
+        margin-left: 70px;
+        width: 100%;
         padding: 1rem;
     }
 
@@ -1055,33 +1012,55 @@
     }
 
     .navbar-title {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
     }
 
     .navbar-subtitle {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
 
-    .form-card {
-        padding: 1.5rem;
+    .business-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
-    .what-happens-next-card {
-        padding: 1.5rem;
+    .edit-grid {
+        grid-template-columns: 1fr;
     }
 
-    .page-stack {
-        gap: 1.5rem;
+    .edit-field.full {
+        grid-column: 1;
+    }
+
+    .business-card {
+        padding: 1.25rem;
+    }
+
+    .business-card-head {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .card-actions {
+        width: 100%;
+        flex-direction: row;
+        justify-content: stretch;
+    }
+
+    .card-btn {
+        flex: 1;
+        text-align: center;
     }
 
     .info-row {
         grid-template-columns: 1fr;
-        gap: 0.25rem;
+        gap: 0.2rem;
     }
 
     .info-label {
         font-weight: 700;
         color: var(--color-gray-700);
+        font-size: 0.8rem;
     }
 
     .service-input-wrapper {
@@ -1092,22 +1071,16 @@
         width: 100%;
     }
 
-    .card-actions {
-        width: 100%;
+    .form-card {
+        padding: 1.25rem;
     }
 
-    .card-btn {
-        flex: 1;
-    }
-}
-
-@media (max-width: 480px) {
-    .add-business-content {
-        padding: 0.875rem;
+    .what-happens-next-card {
+        padding: 1.25rem;
     }
 
-    .navbar-title {
-        font-size: 1.125rem;
+    .page-stack {
+        gap: 1.25rem;
     }
 
     .footer-buttons {
@@ -1119,55 +1092,12 @@
     .submit-btn,
     .delete-btn {
         width: 100%;
-    }
-
-    .business-card {
-        padding: 1.25rem;
-    }
-
-    .form-card {
-        padding: 1.25rem;
-    }
-
-    .business-card-head {
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .card-actions {
-        width: 100%;
-        flex-direction: column;
-    }
-
-    .card-btn {
-        width: 100%;
-        flex: none;
+        text-align: center;
     }
 }
 
 /* ===================================
-   LOADING & SKELETON STATES
-   =================================== */
-
-@keyframes shimmer {
-    0% {
-        background-position: -1000px 0;
-    }
-
-    100% {
-        background-position: 1000px 0;
-    }
-}
-
-.skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite;
-    border-radius: var(--radius-md);
-}
-
-/* ===================================
-   ACCESSIBILITY ENHANCEMENTS
+   ACCESSIBILITY
    =================================== */
 
 *:focus-visible {
@@ -1177,38 +1107,24 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
-    .business-card {
-        border: 2px solid var(--color-gray-900);
-    }
-
-    .card-btn {
-        border: 2px solid currentColor;
-    }
+    .business-card { border: 2px solid var(--color-gray-900); }
+    .card-btn      { border: 2px solid currentColor; }
 }
 
 /* ===================================
-   PRINT STYLES
+   PRINT
    =================================== */
 
 @media print {
-
-    .navbar,
-    .footer-buttons,
-    .card-actions {
-        display: none;
-    }
+    .navbar, .footer-buttons, .card-actions { display: none; }
 
     .business-card {
         break-inside: avoid;
@@ -1223,16 +1139,10 @@
 }
 
 /* ===================================
-   SMOOTH SCROLLING
+   GLOBAL HELPERS
    =================================== */
 
-html {
-    scroll-behavior: smooth;
-}
-
-/* ===================================
-   SELECTION STYLES
-   =================================== */
+html { scroll-behavior: smooth; }
 
 ::selection {
     background-color: rgba(37, 99, 235, 0.2);

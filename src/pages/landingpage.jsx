@@ -46,7 +46,16 @@ const formatBackendError = (err) => {
   }
 
   if (!err.response) return 'Network error — cannot reach the server.';
-  if (status === 400) return 'Your booking status is not confirmed yet!... please pay to confirm your booking';
+
+  // Custom message for review system if backend returns 400
+  if (status === 400) {
+    const backendMsg = err?.response?.data?.message || err?.response?.data?.error;
+    if (backendMsg && (backendMsg.toLowerCase().includes('confirm') || backendMsg.toLowerCase().includes('pay'))) {
+      return 'Your booking status is not confirmed yet!... please pay to confirm your booking';
+    }
+    return backendMsg || 'Bad Request (400). Please check your inputs.';
+  }
+
   if (status === 404) return 'Contact endpoint not found (404). Check backend route.';
   if (status === 422) return 'Validation error — please check your inputs.';
   if (status >= 500) return 'Server error. Please try again later.';
@@ -585,9 +594,10 @@ export default function ReservationCRM() {
 
       {/* ── Booking Status ── */}
       <section className="booking-status">
-        <div className="container">
-          <h2 className="section-titles">Check Your Booking Status & Reviews</h2>
-          <p className="section-subtitles">Enter your email and/or phone number to view your bookings and reviews.</p>
+        <h2 className="section-titles">Check Your Booking Status & Reviews</h2>
+        <p className="section-subtitles">Enter your email and/or phone number to view your bookings and reviews.</p>
+
+        <div className="containers">
 
           <div className="status-card">
             <form onSubmit={handleStatusCheck} className="form-fields">
@@ -744,14 +754,14 @@ export default function ReservationCRM() {
                         </div>
 
                         {/* ── Inline Review Dropdown (Confirmed only) ── */}
-                        {booking.status === 'Confirmed' && (
+                        {/* {booking.status === 'Confirmed' && (
                           <div style={{ width: '100%', marginTop: '8px' }}>
                             <ReviewDropdown
                               trackingId={booking.public_tracking_id}
                               bookingId={booking.id || booking._id || booking.ID}
                             />
                           </div>
-                        )}
+                        )} */}
                       </div>
                     ))}
                   </div>
@@ -759,15 +769,6 @@ export default function ReservationCRM() {
               </div>
             )}
           </div>
-        </div>
-      </section>
-
-      {/* ── Review by Tracking ID ── */}
-      <section id="reviews" className="review-section" style={{ background: '#f8fafc', padding: '4rem 0' }}>
-        <div className="container">
-          <h2 className="section-titles">Leave a Review</h2>
-          <p className="section-subtitles">Have a tracking code? Leave a review for your service directly below.</p>
-
           <div className="status-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
             <div style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '10px' }}>
@@ -790,37 +791,13 @@ export default function ReservationCRM() {
                   className="btn-submit"
                   style={{ width: 'auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: '6px' }}
                   disabled={reviewSearchLoading}
-                  onClick={async () => {
+                  onClick={() => {
                     const tid = reviewInput.trim();
                     if (!tid) return;
-
-                    setReviewSearchLoading(true);
                     setReviewSearchError('');
-                    setReviewBooking(null);
-                    setShowDirectReview(false);
-
-                    try {
-                      // We search for this specific tracking ID
-                      const res = await api.get('/api/v1/public/bookings/my/list', { params: { tracking_id: tid } });
-                      const list = normalizeBookings(res.data);
-                      const found = list.find(b => (b.public_tracking_id || b.tracking_id || b.id) === tid);
-
-                      if (!found) {
-                        setReviewSearchError('Booking not found. Please check your tracking code.');
-                      } else if (found.status !== 'Confirmed' && found.status !== 'CONFIRMED') {
-                        setReviewSearchError('Your booking status is not confirmed yet!... please pay to confirm your booking');
-                        setReviewBooking(found); // Keep it to show details if needed
-                      } else {
-                        setReviewBooking(found);
-                        setReviewTrackingId(tid);
-                        setShowDirectReview(true);
-                        setBookings(null);
-                      }
-                    } catch (err) {
-                      setReviewSearchError(formatBackendError(err));
-                    } finally {
-                      setReviewSearchLoading(false);
-                    }
+                    setReviewTrackingId(tid);
+                    setShowDirectReview(true);
+                    setBookings(null);
                   }}
                 >
                   {reviewSearchLoading ? '...' : 'Go'}
@@ -841,8 +818,8 @@ export default function ReservationCRM() {
 
             {showDirectReview && reviewTrackingId && (
               <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px', marginTop: '20px', textAlign: 'left' }}>
-                <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: '600' }}>
-                  Review for Tracking Code: <span style={{ color: '#2563eb' }}>{reviewTrackingId}</span>
+                <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: '600', color: '#0c0d0eff' }}>
+                  Review for Tracking Code: <p style={{ color: '#2563eb', fontWeight: '700' }}>{reviewTrackingId}</p>
                 </h4>
                 <ReviewDropdown trackingId={reviewTrackingId} initialOpen={true} />
               </div>
@@ -850,6 +827,16 @@ export default function ReservationCRM() {
           </div>
         </div>
       </section>
+
+      {/* ── Review by Tracking ID ── */}
+      {/* <section id="reviews" className="review-section" style={{ background: '#f8fafc', padding: '4rem 0' }}>
+        <div className="container">
+          <h2 className="section-titles">Leave a Review</h2>
+          <p className="section-subtitles">Have a tracking code? Leave a review for your service directly below.</p>
+
+          
+        </div>
+      </section> */}
 
       {/* ── Contact ── */}
       <section id="contact" className="contact">

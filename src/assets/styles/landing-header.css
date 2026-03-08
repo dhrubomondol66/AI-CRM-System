@@ -113,49 +113,57 @@
 /* For tablet and smaller devices */
 @media (max-width: 1024px) {
 
+  .landing-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0rem;
+    font-size: 0.7rem;
+  }
+
   .landing-header-content {
     padding: 1.5rem;
-    flex-wrap: wrap; /* Allow wrapping */
-    flex-direction: row; /* Keep items in a row on wider screens */
-    justify-content: space-between; /* Ensure items are spread across */
-    gap: 1rem; /* Add gap between elements */
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.5rem;
     font-size: 0.8rem;
   }
 
   /* Align nav links and buttons properly */
   .landing-nav-links {
     display: flex;
-    gap: 0.5rem;
-    justify-content: flex-start; /* Align the nav items to the left */
+    gap: 0rem;
+    justify-content: flex-start;
     width: auto;
+    font-size: 0.2rem;
   }
 
   /* Button container */
   .landing-buttons {
     display: flex;
     gap: 1rem;
-    justify-content: flex-end; /* Align the buttons to the right */
+    justify-content: flex-end;
     width: auto;
   }
 
   .landing-header-content .landing-nav-links a {
-    margin-right: 1rem; /* Space between navigation links */
+    margin-right: 1rem;
   }
 
   .landing-buttons a {
-    margin-right: 1rem; /* Space between buttons */
+    margin-right: 1rem;
   }
 }
+
 /* For mobile devices */
-/* For mobile and tablet devices (max-width: 768px) */
 @media (max-width: 767px) {
 
   /* Adjust the header content for smaller screens */
   .landing-header-content {
     padding: 1rem;
-    flex-direction: column; /* Stack elements vertically */
+    flex-direction: column;
     align-items: center;
-    gap: 1.5rem; /* Add space between elements */
+    gap: 1.5rem;
   }
 
   /* Adjust the logo image size */
@@ -167,41 +175,40 @@
   /* Title font size and text alignment */
   .landing-header-title {
     font-size: 1.1rem;
-    text-align: center;
-    color: #0e0f11; /* Ensuring the color remains visible */
+    color: #0e0f11;
   }
 
   /* Stack the navigation links vertically */
   .landing-nav-links {
     flex-direction: column;
-    gap: 1.5rem; /* Increased space between links */
+    gap: 1.5rem;
     text-align: center;
     width: 100%;
   }
 
   /* Style for navigation links */
   .landing-nav-links a {
-    font-size: 1rem; /* Adjust font size for readability */
+    font-size: 1rem;
     color: #6f7680;
     text-decoration: none;
     font-weight: 400;
     transition: color 0.2s ease;
-    margin-right: 0; /* Remove right margin */
+    margin-right: 0;
   }
 
   /* Button container styling */
   .landing-buttons {
     flex-direction: column;
     width: 100%;
-    gap: 1rem; /* Add gap between the buttons */
+    gap: 1rem;
   }
 
   /* Make the admin and primary buttons full-width */
   .landing-btn-admin,
   .landing-btn-primary {
     width: 100%;
-    padding: 0.75rem 1.5rem; /* Make buttons more touch-friendly */
-    font-size: 1rem; /* Adjust button font size */
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
     text-align: center;
   }
 
@@ -224,8 +231,9 @@
     box-shadow: none;
   }
 }
+
 /* ===== Laptop (1024px – 1280px) ===== */
-@media (max-width: 1023px) {
+@media (max-width: 1020px) {
   .landing-buttons {
     flex-direction: row;
     width: 100%;

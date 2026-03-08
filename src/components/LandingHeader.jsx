@@ -21,13 +21,6 @@ const LandingHeader = () => {
       aboutSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
-  const handleReviewsClick = (e) => {
-    const reviewsSection = document.querySelector('.review-section');
-    if (reviewsSection) {
-      e.preventDefault();
-      reviewsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
   const handleBookingStatusClick = (e) => {
     const bookingStatusSection = document.querySelector('.booking-status');
     if (bookingStatusSection) {
@@ -44,8 +37,7 @@ const LandingHeader = () => {
         </div>
         <div className='landing-nav-links'>
           <li><Link to={`/customerservices/`}>Services</Link></li>
-          <li><Link to="/" onClick={handleBookingStatusClick}>Booking Status</Link></li>
-          <li><Link to="/" onClick={handleReviewsClick}>Reviews</Link></li>
+          <li><Link to="/" onClick={handleBookingStatusClick}>Status & Reviews</Link></li>
           <li><Link to="/" onClick={handleContactClick}>Contact</Link></li>
           <li><Link to="/" onClick={handleAboutClick}>About</Link></li>
         </div>

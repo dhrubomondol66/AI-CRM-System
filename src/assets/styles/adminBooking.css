@@ -440,7 +440,7 @@ body {
 
 .bookings-table-header {
   display: grid;
-  grid-template-columns: 2fr 2fr 1.5fr 1fr 1fr 0.5fr;
+  grid-template-columns: 2fr 1.5fr 1.8fr 1.5fr 1.5fr 1fr 1fr;
   gap: 1rem;
   padding: 1rem 1.5rem;
   background-color: #f9fafb;
@@ -457,7 +457,7 @@ body {
 
 .bookings-table-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1.5fr 1fr 1fr 0.5fr;
+  grid-template-columns: 2fr 1.5fr 1.8fr 1.5fr 1.5fr 1fr 1fr;
   gap: 1rem;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #f3f4f6;

@@ -37,10 +37,10 @@ const DATE_OPTIONS = ['Today', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'T
 
 const STATUS_CONFIG = {
   PENDING_PAYMENT: { bg: '#fef3c7', color: '#92400e', label: 'Pending Payment', chartColor: '#f59e0b' },
-  INITIATED:       { bg: '#dbeafe', color: '#1e40af', label: 'Initiated',        chartColor: '#3b82f6' },
-  CONFIRMED:       { bg: '#d1fae5', color: '#065f46', label: 'Confirmed',        chartColor: '#10b981' },
-  CANCELLED:       { bg: '#fee2e2', color: '#991b1b', label: 'Cancelled',        chartColor: '#ef4444' },
-  EXPIRED:         { bg: '#f3f4f6', color: '#6b7280', label: 'Expired',          chartColor: '#94a3b8' },
+  INITIATED: { bg: '#dbeafe', color: '#1e40af', label: 'Initiated', chartColor: '#3b82f6' },
+  CONFIRMED: { bg: '#d1fae5', color: '#065f46', label: 'Confirmed', chartColor: '#10b981' },
+  CANCELLED: { bg: '#fee2e2', color: '#991b1b', label: 'Cancelled', chartColor: '#ef4444' },
+  EXPIRED: { bg: '#f3f4f6', color: '#6b7280', label: 'Expired', chartColor: '#94a3b8' },
 };
 const getStatusStyle = (s) => STATUS_CONFIG[s] ?? { bg: '#f3f4f6', color: '#374151', label: s, chartColor: '#cbd5e1' };
 
@@ -87,21 +87,49 @@ const buildHourlyVolume = (bookings) => {
     .map(([label, count]) => ({ label, count }));
 };
 
-const buildWeeklyComparison = (bookings) => {
-  const now = new Date();
-  const thisWeekStart = new Date(now); thisWeekStart.setDate(now.getDate() - 7);
-  const lastWeekStart = new Date(now); lastWeekStart.setDate(now.getDate() - 14);
+const buildWeeklyComparison = (bookings, period = 'Last 30 Days', customRange) => {
+  if (!bookings || bookings.length === 0) return { thisWeek: 0, lastWeek: 0, change: 0 };
 
-  const thisWeek = bookings.filter(b => new Date(b.created_at) >= thisWeekStart).length;
-  const lastWeek = bookings.filter(b => {
+  let endDate = new Date();
+  let periodDays = 7; // default: Last 7 Days
+
+  if (period === 'CustomRange' && customRange?.start && customRange?.end) {
+    const start = new Date(customRange.start);
+    const end = new Date(customRange.end);
+    end.setHours(23, 59, 59, 999);
+    const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    periodDays = diff;
+    endDate = end;
+  } else {
+    if (period === 'Today') periodDays = 1;
+    else if (period === 'Last 7 Days') periodDays = 7;
+    else if (period === 'Last 30 Days') periodDays = 30;
+    else if (period === 'Last 90 Days') periodDays = 90;
+    else if (period === 'This Year') periodDays = 365;
+  }
+
+  const thisPeriodStart = new Date(endDate);
+  thisPeriodStart.setDate(endDate.getDate() - periodDays);
+
+  const lastPeriodStart = new Date(thisPeriodStart);
+  lastPeriodStart.setDate(thisPeriodStart.getDate() - periodDays);
+
+  const thisPeriod = bookings.filter(b => {
     const d = new Date(b.created_at);
-    return d >= lastWeekStart && d < thisWeekStart;
+    return d >= thisPeriodStart && d <= endDate;
   }).length;
 
-  const change = lastWeek === 0 ? 100 : Math.round(((thisWeek - lastWeek) / lastWeek) * 100);
-  return { thisWeek, lastWeek, change };
-};
+  const lastPeriod = bookings.filter(b => {
+    const d = new Date(b.created_at);
+    return d >= lastPeriodStart && d < thisPeriodStart;
+  }).length;
 
+  const change = lastPeriod === 0
+    ? (thisPeriod > 0 ? 100 : 0)
+    : Math.round(((thisPeriod - lastPeriod) / lastPeriod) * 100);
+
+  return { thisWeek: thisPeriod, lastWeek: lastPeriod, change };
+};
 // ── Chart options ──────────────────────────────────────────────────────────
 const lineOptions = {
   responsive: true, maintainAspectRatio: false,
@@ -154,48 +182,54 @@ function TrendPill({ value }) {
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function Analytics() {
-  const [rawData,     setRawData]     = useState(null);
-  const [loading,     setLoading]     = useState(true);
-  const [error,       setError]       = useState(null);
-  const [dateFilter,  setDateFilter]  = useState('Last 30 Days');
-  const [showFilter,  setShowFilter]  = useState(false);
+  const [rawData, setRawData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dateFilter, setDateFilter] = useState('Last 30 Days');
+  const [showFilter, setShowFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [lastSync,    setLastSync]    = useState(null);
+  const [lastSync, setLastSync] = useState(null);
+  const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get('/api/v1/admin/dashboard', { params: { period: dateFilter } });
+      const params = { period: dateFilter };
+      if (dateFilter === 'CustomRange') {
+        params.start_date = customRange.start;
+        params.end_date = customRange.end;
+      }
+      const res = await api.get('/api/v1/admin/dashboard', { params });
       const d = res?.data?.data ?? res?.data ?? {};
       setRawData(d);
       setLastSync(new Date());
     } catch (err) {
       const status = err?.response?.status;
-      const msg    = err?.response?.data?.message ?? err?.response?.data?.error;
-      if (!err.response)       setError('Network error — cannot reach the server.');
+      const msg = err?.response?.data?.message ?? err?.response?.data?.error;
+      if (!err.response) setError('Network error — cannot reach the server.');
       else if (status === 401) setError('Session expired. Please log in again.');
       else if (status === 403) setError('Access denied (403). Check admin permissions.');
-      else                     setError(msg ?? `Error ${status ?? 'unknown'} fetching analytics.`);
+      else setError(msg ?? `Error ${status ?? 'unknown'} fetching analytics.`);
     } finally {
       setLoading(false);
     }
-  }, [dateFilter]);
+  }, [dateFilter, customRange]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   // ── Derived values ────────────────────────────────────────────────────
-  const totalBookings   = rawData?.total_bookings ?? 0;
-  const totalCalls      = rawData?.total_calls    ?? 0;
-  const recentBookings  = Array.isArray(rawData?.recent_bookings) ? rawData.recent_bookings : [];
+  const totalBookings = rawData?.total_bookings ?? 0;
+  const totalCalls = rawData?.total_calls ?? 0;
+  const recentBookings = Array.isArray(rawData?.recent_bookings) ? rawData.recent_bookings : [];
 
-  const confirmedCount  = recentBookings.filter(b => b.status === 'CONFIRMED').length;
-  const pendingCount    = recentBookings.filter(b => b.status === 'PENDING_PAYMENT').length;
-  const cancelledCount  = recentBookings.filter(b => b.status === 'CANCELLED').length;
-  const expiredCount    = recentBookings.filter(b => b.status === 'EXPIRED').length;
-  const initiatedCount  = recentBookings.filter(b => b.status === 'INITIATED').length;
+  const confirmedCount = recentBookings.filter(b => b.status === 'CONFIRMED').length;
+  const pendingCount = recentBookings.filter(b => b.status === 'PENDING_PAYMENT').length;
+  const cancelledCount = recentBookings.filter(b => b.status === 'CANCELLED').length;
+  const expiredCount = recentBookings.filter(b => b.status === 'EXPIRED').length;
+  const initiatedCount = recentBookings.filter(b => b.status === 'INITIATED').length;
 
-  const conversionRate  = recentBookings.length > 0
+  const conversionRate = recentBookings.length > 0
     ? Math.round((confirmedCount / recentBookings.length) * 100)
     : 0;
 
@@ -203,10 +237,14 @@ export default function Analytics() {
     ? Math.round((cancelledCount / recentBookings.length) * 100)
     : 0;
 
-  const weeklyComparison = buildWeeklyComparison(recentBookings);
-  const bookingTrends    = buildBookingTrends(recentBookings);
-  const statusBreakdown  = buildStatusBreakdown(recentBookings);
-  const hourlyVolume     = buildHourlyVolume(recentBookings);
+  const weeklyComparison = buildWeeklyComparison(
+    recentBookings,
+    dateFilter,
+    customRange
+  );
+  const bookingTrends = buildBookingTrends(recentBookings);
+  const statusBreakdown = buildStatusBreakdown(recentBookings);
+  const hourlyVolume = buildHourlyVolume(recentBookings);
 
   // ── Chart datasets ────────────────────────────────────────────────────
   const bookingTrendsData = {
@@ -265,12 +303,12 @@ export default function Analytics() {
 
   // ── Stat cards ────────────────────────────────────────────────────────
   const statCards = [
-    { label: 'Total Bookings',     value: totalBookings,    icon: Calendar,     color: '#2563eb', sub: `${recentBookings.length} recent` },
-    { label: 'Total Calls',        value: totalCalls,       icon: Phone,        color: '#7c3aed', sub: 'voice interactions' },
-    { label: 'Conversion Rate',    value: `${conversionRate}%`, icon: TrendingUp, color: '#10b981', sub: `${confirmedCount} confirmed` },
-    { label: 'Cancellation Rate',  value: `${cancellationRate}%`, icon: XCircle,  color: '#ef4444', sub: `${cancelledCount} cancelled` },
-    { label: 'Pending Payment',    value: pendingCount,     icon: Clock,        color: '#f59e0b', sub: 'awaiting payment' },
-    { label: 'Initiated',          value: initiatedCount,   icon: Activity,     color: '#6366f1', sub: 'in progress' },
+    { label: 'Total Bookings', value: totalBookings, icon: Calendar, color: '#2563eb', sub: `${recentBookings.length} recent` },
+    { label: 'Total Calls', value: totalCalls, icon: Phone, color: '#7c3aed', sub: 'voice interactions' },
+    { label: 'Conversion Rate', value: `${conversionRate}%`, icon: TrendingUp, color: '#10b981', sub: `${confirmedCount} confirmed` },
+    { label: 'Cancellation Rate', value: `${cancellationRate}%`, icon: XCircle, color: '#ef4444', sub: `${cancelledCount} cancelled` },
+    { label: 'Pending Payment', value: pendingCount, icon: Clock, color: '#f59e0b', sub: 'awaiting payment' },
+    { label: 'Initiated', value: initiatedCount, icon: Activity, color: '#6366f1', sub: 'in progress' },
   ];
 
   // ── Export ────────────────────────────────────────────────────────────
@@ -285,8 +323,8 @@ export default function Analytics() {
     ]);
     const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     a.href = url; a.download = `analytics-${Date.now()}.csv`;
     a.click(); URL.revokeObjectURL(url);
   };
@@ -311,7 +349,7 @@ export default function Analytics() {
         <header className="content-header">
           <div className="search-container">
             <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
             <input
               type="text" placeholder="Search by name, phone, booking ID or status…"
@@ -356,17 +394,51 @@ export default function Analytics() {
           </div>
           <div style={{ position: 'relative' }}>
             <button className="date-filter-btn" onClick={() => setShowFilter(v => !v)}>
-              <span>{dateFilter}</span>
-              <ChevronDown size={15} className="chevron-icon" style={{ transform: showFilter ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              <Calendar size={15} style={{ marginRight: '8px' }} />
+              <span>{dateFilter === 'CustomRange' ? 'Custom Range' : dateFilter}</span>
+              <ChevronDown size={15} className="chevron-icon" style={{ transform: showFilter ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: '8px' }} />
             </button>
             {showFilter && (
-              <div className="an-date-dropdown">
+              <div className="an-date-dropdown" style={{ width: '220px', padding: '8px' }}>
                 {DATE_OPTIONS.map(opt => (
                   <button key={opt} className={`an-date-option ${dateFilter === opt ? 'active' : ''}`}
-                    onClick={() => { setDateFilter(opt); setShowFilter(false); }}>
+                    onClick={() => { setDateFilter(opt); if (opt !== 'CustomRange') setShowFilter(false); }}>
                     {opt}
                   </button>
                 ))}
+                <button className={`an-date-option ${dateFilter === 'CustomRange' ? 'active' : ''}`}
+                  onClick={() => setDateFilter('CustomRange')}>
+                  Custom Range
+                </button>
+
+                {dateFilter === 'CustomRange' && (
+                  <div style={{ marginTop: '10px', padding: '10px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.7rem', color: '#64748b' }}>Start Date</label>
+                      <input
+                        type="date"
+                        value={customRange.start}
+                        onChange={(e) => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
+                        style={{ width: '100%', padding: '4px', fontSize: '0.8rem', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.7rem', color: '#64748b' }}>End Date</label>
+                      <input
+                        type="date"
+                        value={customRange.end}
+                        onChange={(e) => setCustomRange(prev => ({ ...prev, end: e.target.value }))}
+                        style={{ width: '100%', padding: '4px', fontSize: '0.8rem', border: '1px solid #e2e8f0', borderRadius: '4px' }}
+                      />
+                    </div>
+                    <button
+                      onClick={() => setShowFilter(false)}
+                      style={{ marginTop: '5px', background: '#2563eb', color: 'white', border: 'none', padding: '6px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer' }}
+                    >
+                      Apply Range
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -446,7 +518,7 @@ export default function Analytics() {
             <div className="an-chart-body">
               {loading ? <div className="an-chart-skeleton"><Sk w="100%" h="100%" r="8px" /></div>
                 : bookingTrends.length > 0 ? <Line data={bookingTrendsData} options={lineOptions} />
-                : <div className="an-chart-empty">No trend data available.</div>}
+                  : <div className="an-chart-empty">No trend data available.</div>}
             </div>
           </div>
 
@@ -492,32 +564,90 @@ export default function Analytics() {
             <div className="an-chart-body">
               {loading ? <div className="an-chart-skeleton"><Sk w="100%" h="100%" r="8px" /></div>
                 : hourlyVolume.length > 0 ? <Bar data={hourlyVolumeData} options={barOptions} />
-                : <div className="an-chart-empty">No activity data available.</div>}
+                  : <div className="an-chart-empty">No activity data available.</div>}
             </div>
           </div>
 
           {/* Week-over-week comparison */}
+          {/* Week-over-week / period comparison */}
           <div className="an-chart-card an-chart-narrow">
             <div className="an-chart-header">
               <div>
-                <h3 className="an-chart-title">Week vs Week</h3>
-                <p className="an-chart-sub">This week vs last week</p>
+                <h3 className="an-chart-title">
+                  {dateFilter === 'Today' ? 'Today vs Yesterday'
+                    : dateFilter === 'Last 7 Days' ? 'This Week vs Last Week'
+                      : dateFilter === 'Last 30 Days' ? 'This Month vs Last Month'
+                        : dateFilter === 'Last 90 Days' ? 'This Quarter vs Last Quarter'
+                          : dateFilter === 'This Year' ? 'This Year vs Last Year'
+                            : 'Current vs Previous Period'}
+                </h3>
+                <p className="an-chart-sub">
+                  {dateFilter === 'CustomRange'
+                    ? `${customRange.start || '—'} → ${customRange.end || '—'}`
+                    : 'Comparing current period to previous'}
+                </p>
               </div>
               {!loading && <TrendPill value={weeklyComparison.change} />}
             </div>
+
             <div className="an-chart-body">
-              {loading ? <div className="an-chart-skeleton"><Sk w="100%" h="100%" r="8px" /></div>
-                : <Bar data={weeklyCompData} options={weeklyCompOptions} />}
+              {loading
+                ? <div className="an-chart-skeleton"><Sk w="100%" h="100%" r="8px" /></div>
+                : <Bar
+                  data={{
+                    labels: [
+                      dateFilter === 'Today' ? 'Yesterday'
+                        : dateFilter === 'Last 7 Days' ? 'Last Week'
+                          : dateFilter === 'Last 30 Days' ? 'Last Month'
+                            : dateFilter === 'Last 90 Days' ? 'Last Quarter'
+                              : dateFilter === 'This Year' ? 'Last Year'
+                                : 'Previous Period',
+                      dateFilter === 'Today' ? 'Today'
+                        : dateFilter === 'Last 7 Days' ? 'This Week'
+                          : dateFilter === 'Last 30 Days' ? 'This Month'
+                            : dateFilter === 'Last 90 Days' ? 'This Quarter'
+                              : dateFilter === 'This Year' ? 'This Year'
+                                : 'Current Period',
+                    ],
+                    datasets: [{
+                      data: [weeklyComparison.lastWeek, weeklyComparison.thisWeek],
+                      backgroundColor: ['rgba(148,163,184,0.6)', 'rgba(37,99,235,0.8)'],
+                      borderRadius: 8,
+                      borderSkipped: false,
+                    }],
+                  }}
+                  options={weeklyCompOptions}
+                />
+              }
             </div>
+
             {!loading && (
               <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '0.75rem', fontSize: '0.8rem' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#64748b' }}>{weeklyComparison.lastWeek}</div>
-                  <div style={{ color: '#94a3b8' }}>Last week</div>
+                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#64748b' }}>
+                    {weeklyComparison.lastWeek}
+                  </div>
+                  <div style={{ color: '#94a3b8' }}>
+                    {dateFilter === 'Today' ? 'Yesterday'
+                      : dateFilter === 'Last 7 Days' ? 'Last week'
+                        : dateFilter === 'Last 30 Days' ? 'Last month'
+                          : dateFilter === 'Last 90 Days' ? 'Last quarter'
+                            : dateFilter === 'This Year' ? 'Last year'
+                              : 'Previous'}
+                  </div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#2563eb' }}>{weeklyComparison.thisWeek}</div>
-                  <div style={{ color: '#94a3b8' }}>This week</div>
+                  <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#2563eb' }}>
+                    {weeklyComparison.thisWeek}
+                  </div>
+                  <div style={{ color: '#94a3b8' }}>
+                    {dateFilter === 'Today' ? 'Today'
+                      : dateFilter === 'Last 7 Days' ? 'This week'
+                        : dateFilter === 'Last 30 Days' ? 'This month'
+                          : dateFilter === 'Last 90 Days' ? 'This quarter'
+                            : dateFilter === 'This Year' ? 'This year'
+                              : 'Current'}
+                  </div>
                 </div>
               </div>
             )}
@@ -562,7 +692,7 @@ export default function Analytics() {
             ) : (
               filtered.map((b, i) => {
                 const statusStyle = getStatusStyle(b.status);
-                const createdAt   = b.created_at
+                const createdAt = b.created_at
                   ? new Date(b.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                   : '—';
                 return (
