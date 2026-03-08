@@ -9,13 +9,21 @@ import Header from '../components/Header';
 import market from '../assets/market.png';
 import sending from '../assets/sending.png';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import { Device } from '@twilio/voice-sdk';
 import VoiceCallModal from '../components/VoiceCallModal';
 
 // ── Axios instance ──────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = Cookies.get('access_token') || localStorage.getItem('access_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
 // ── Unique session ID per browser tab ──────────────────────────────────────
@@ -33,6 +41,7 @@ const normalizeService = (item, i) => {
   const rawPrice = item.price ?? item.base_price;
   return {
     id: item.id ?? item._id ?? i,
+    business_id: item.business_id ?? item.business?.id ?? item.business?._id ?? null,
     title: item.title ?? item.name ?? item.service_name ?? 'Untitled Service',
     description: item.description ?? item.desc ?? '',
     price: rawPrice != null
@@ -324,6 +333,10 @@ export default function BookingAssistant() {
   const [totalReviews, setTotalReviews] = useState(0);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
+  // ── Images state ─────────────────────────────────────────────────────────
+  const [serviceImages, setServiceImages] = useState([]);
+  const [imagesLoading, setImagesLoading] = useState(false);
+
   const chatEndRef = useRef(null);
 
   const business = services.length > 0
@@ -412,6 +425,36 @@ export default function BookingAssistant() {
 
     fetchReviews();
   }, [selectedService, business_slug]);
+
+  // ── Fetch service images when service selected ──────────────────────────
+  useEffect(() => {
+    if (!selectedService || !selectedService.business_id) return;
+
+    const fetchImages = async () => {
+      setImagesLoading(true);
+      try {
+        const res = await api.get(
+          `/api/v1/admin/businesses/${selectedService.business_id}/services/${selectedService.id}/images`
+        );
+        let imgData = [];
+        if (Array.isArray(res.data)) imgData = res.data;
+        else if (Array.isArray(res.data?.data)) imgData = res.data.data;
+        else if (Array.isArray(res.data?.results)) imgData = res.data.results;
+        else if (res.data && typeof res.data === 'object') {
+          const key = Object.keys(res.data).find(k => Array.isArray(res.data[k]));
+          if (key) imgData = res.data[key];
+        }
+        setServiceImages(imgData);
+      } catch (err) {
+        console.error('Error fetching service images:', err);
+        setServiceImages([]);
+      } finally {
+        setImagesLoading(false);
+      }
+    };
+
+    fetchImages();
+  }, [selectedService]);
 
   // ── Start conversation when a service is selected ────────────────────────
   useEffect(() => {
@@ -637,10 +680,25 @@ export default function BookingAssistant() {
                           cursor: 'pointer',
                           backgroundColor: selectedService?.id === s.id ? '#eff6ff' : 'white',
                           transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px'
                         }}
                       >
-                        <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>{s.title}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{s.priceDisplay}</div>
+                        {s.logo_url && (
+                          <div style={{ flexShrink: 0 }}>
+                            <img
+                              src={s.logo_url}
+                              alt={s.title}
+                              style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </div>
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.875rem', fontWeight: '600', color: selectedService?.id === s.id ? '#1e40af' : '#1e293b' }}>{s.title}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{s.priceDisplay}</div>
+                        </div>
                       </div>
                     ))
                   )}
@@ -672,6 +730,40 @@ export default function BookingAssistant() {
                         <span className="detail-value" style={{ fontSize: '0.875rem', lineHeight: '1.4', marginTop: '0.25rem' }}>
                           {selectedService.description}
                         </span>
+                      </div>
+                    )}
+
+                    {/* ── Images Section ── */}
+                    {serviceImages.length > 0 && (
+                      <div className="service-images-section" style={{ marginTop: '1.5rem' }}>
+                        <div className="section-title-small" style={{ fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem' }}>
+                          SERVICE GALLERY
+                        </div>
+                        <div className="images-scroll" style={{
+                          display: 'flex',
+                          gap: '10px',
+                          overflowX: 'auto',
+                          paddingBottom: '10px',
+                          scrollbarWidth: 'thin'
+                        }}>
+                          {serviceImages.map((img, i) => (
+                            <div key={img.id || i} style={{ flexShrink: 0 }}>
+                              <img
+                                src={img.image_url || img.url || (typeof img === 'string' ? img : null)}
+                                alt={`Service gallery ${i + 1}`}
+                                style={{
+                                  width: '100px',
+                                  height: '100px',
+                                  objectFit: 'cover',
+                                  borderRadius: '10px',
+                                  border: '1px solid #e2e8f0',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                                }}
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, AlertCircle, CheckCircle, Loader, RefreshCw } from 'lucide-react';
+import { Play, AlertCircle, CheckCircle, Loader, RefreshCw, Trash2, Plus, Image as ImageIcon } from 'lucide-react';
 import '../assets/styles/aiconfigaration.css';
 import Sidebar from '../components/Sidebar.jsx';
 import Cookies from 'js-cookie';
@@ -93,6 +93,9 @@ export default function AIConfiguration() {
     } catch { return null; }
   });
   const [isServiceLoaded, setIsServiceLoaded] = useState(false);
+  const [svcImages, setSvcImages] = useState([]);
+  const [svcImagesLoading, setSvcImagesLoading] = useState(false);
+  const [imageUploadLoading, setImageUploadLoading] = useState(false);
 
   const applyServiceConfig = useCallback((svc) => {
     if (!svc) return;
@@ -156,6 +159,20 @@ export default function AIConfiguration() {
     }
   }, []);
 
+  const fetchSvcImages = useCallback(async (bid, sid) => {
+    if (!bid || !sid) { setSvcImages([]); return; }
+    setSvcImagesLoading(true);
+    try {
+      const res = await api.get(`/api/v1/admin/businesses/${bid}/services/${sid}/images`);
+      const data = extractList(res.data);
+      setSvcImages(data);
+    } catch (err) {
+      console.error('Error fetching service images:', err);
+    } finally {
+      setSvcImagesLoading(false);
+    }
+  }, []);
+
   useEffect(() => { fetchBusinesses(); }, [fetchBusinesses]);
 
   useEffect(() => {
@@ -167,9 +184,13 @@ export default function AIConfiguration() {
 
   useEffect(() => {
     const svc = services.find((s) => s.id === selectedService);
-    if (svc) applyServiceConfig(svc);
-    else resetForm();
-  }, [selectedService, services, applyServiceConfig]);
+    if (svc) {
+      applyServiceConfig(svc);
+      fetchSvcImages(selectedBusinessId, selectedService);
+    } else {
+      resetForm();
+    }
+  }, [selectedService, services, applyServiceConfig, selectedBusinessId, fetchSvcImages]);
 
   const resetForm = () => {
     setSelectedVoice('Sophia');
@@ -183,6 +204,45 @@ export default function AIConfiguration() {
     setAllowMultipleBookings(false);
     setMultipleBookingsError(null);
     setIsServiceLoaded(false);
+    setSvcImages([]);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !selectedBusinessId || !selectedService) return;
+
+    setImageUploadLoading(true);
+    const formData = new FormData();
+    // Try both 'file' and 'image' as field names
+    formData.append('file', file);
+
+    try {
+      await api.post(
+        `/api/v1/admin/businesses/${selectedBusinessId}/services/${selectedService}/images`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      fetchSvcImages(selectedBusinessId, selectedService);
+    } catch (err) {
+      setSaveError('Image upload failed: ' + httpErrorMsg(err));
+    } finally {
+      setImageUploadLoading(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const handleImageDelete = async (imageId) => {
+    if (!window.confirm('Are you sure you want to delete this image?') || !selectedBusinessId || !selectedService) return;
+
+    try {
+      await api.delete(
+        `/api/v1/admin/businesses/${selectedBusinessId}/services/${selectedService}/images/${imageId}`
+      );
+      setSvcImages((prev) => prev.filter((img) => (img.id ?? img._id) !== imageId));
+    } catch (err) {
+      setSaveError('Failed to delete image: ' + httpErrorMsg(err));
+    }
   };
 
   const addPrompt = () => {
@@ -487,10 +547,101 @@ export default function AIConfiguration() {
                 <input type="time" value={closingTime} onChange={(e) => setClosingTime(e.target.value)} />
               </div>
 
-              <h2 className="ai-config-section-title">Price</h2>
               <div className="form-group">
                 <label>Price *</label>
                 <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="$USD" />
+              </div>
+
+              <h2 className="ai-config-section-title">Service Gallery</h2>
+              <div className="svc-gallery-container" style={{
+                background: '#f8fafc',
+                border: '1px border-dashed #cbd5e1',
+                borderRadius: '12px',
+                padding: '1.5rem',
+                marginTop: '1rem'
+              }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+                  {svcImages.map((img) => {
+                    const id = img.id ?? img._id;
+                    const url = img.image_url || img.url || (typeof img === 'string' ? img : null);
+                    return (
+                      <div key={id} style={{ position: 'relative', width: '100px', height: '100px' }}>
+                        <img
+                          src={url}
+                          alt="Service"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                          }}
+                        />
+                        <button
+                          onClick={() => handleImageDelete(id)}
+                          style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {svcImagesLoading && (
+                    <div style={{ width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', borderRadius: '8px' }}>
+                      <Loader size={20} className="spinning-icon" />
+                    </div>
+                  )}
+
+                  <label style={{
+                    width: '100px',
+                    height: '100px',
+                    border: '2px dashed #cbd5e1',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: imageUploadLoading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    backgroundColor: 'white'
+                  }}>
+                    {imageUploadLoading ? (
+                      <Loader size={20} className="spinning-icon" color="#2563eb" />
+                    ) : (
+                      <>
+                        <Plus size={20} color="#64748b" />
+                        <span style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '4px' }}>Upload</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      id="svc-image-upload"
+                      style={{ display: 'none' }}
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={imageUploadLoading}
+                    />
+                  </label>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
+                  These images will be displayed to customers when viewing this service.
+                </p>
               </div>
             </section>
 
@@ -525,7 +676,7 @@ export default function AIConfiguration() {
 
                 {/* Standard permission toggles */}
                 {[
-                  { key: 'cancelBookings',     title: 'Cancel Bookings',     desc: 'AI can process cancellations' },
+                  { key: 'cancelBookings', title: 'Cancel Bookings', desc: 'AI can process cancellations' },
                   { key: 'rescheduleBookings', title: 'Reschedule Bookings', desc: 'AI can move appointments' },
                 ].map(({ key, title, desc }) => (
                   <div className="permission-item" key={key}>

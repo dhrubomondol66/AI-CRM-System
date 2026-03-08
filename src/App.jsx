@@ -15,6 +15,8 @@ import ForgotPassword from './auth/forgotPassword.jsx';
 import ResetPassword from './auth/resetPassword.jsx';
 import Profile from './pages/profile.jsx';
 import ChangePassword from './auth/changePassword.jsx';
+import PaymentSuccess from './pages/paymentSuccess.jsx';
+import PaymentCancelled from './pages/paymentCancelled.jsx';
 import { PlatformProvider } from './pages/platformContext';
 import { PlatformContactProvider } from './pages/platformContact';
 
@@ -41,6 +43,9 @@ function App() {
             <Route path="/reset-password/*" element={<ResetPassword />} />
             <Route path="/profile/*" element={<Profile />} />
             <Route path="/change-password/*" element={<ChangePassword />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/cancelled" element={<PaymentCancelled />} />
+            <Route path="/payment/cancel" element={<PaymentCancelled />} />
           </Routes>
         </Router>
       </PlatformContactProvider>
