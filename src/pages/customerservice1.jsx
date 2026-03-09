@@ -339,26 +339,26 @@ function ServiceImageCarousel({ images }) {
             onClick={(e) => { e.stopPropagation(); setLightbox((l) => (l - 1 + total) % total); }}
             style={{
               position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
-              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
-              width: '44px', height: '44px', borderRadius: '50%', fontSize: '1.4rem',
-              cursor: 'pointer', backdropFilter: 'blur(4px)',
+              background: 'transparent', border: 'none', color: '#fff',
+              width: '44px', height: '44px', borderRadius: '50%', fontSize: '2.4rem',
+              cursor: 'pointer', backdropFilter: 'blur(4px)', fontWeight: '200',
             }}
           >‹</button>
           <button
             onClick={(e) => { e.stopPropagation(); setLightbox((l) => (l + 1) % total); }}
             style={{
               position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
-              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
-              width: '44px', height: '44px', borderRadius: '50%', fontSize: '1.4rem',
-              cursor: 'pointer', backdropFilter: 'blur(4px)',
+              background: 'transparent', border: 'none', color: '#fff',
+              width: '44px', height: '44px', borderRadius: '50%', fontSize: '2.4rem',
+              cursor: 'pointer', backdropFilter: 'blur(4px)', fontWeight: '200',
             }}
           >›</button>
           <button
             onClick={() => setLightbox(null)}
             style={{
               position: 'absolute', top: '16px', right: '20px',
-              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
-              width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.1rem',
+              background: 'transparent', border: 'none', color: '#fff',
+              width: '36px', height: '36px', borderRadius: '25%', fontSize: '1.1rem',
               cursor: 'pointer',
             }}
           >✕</button>
@@ -423,7 +423,7 @@ function ServiceImageCarousel({ images }) {
             <button
               onClick={next}
               style={{
-                position: 'absolute', right: '-12px', top: '50%', transform: 'translateY(-50%)',
+                position: 'absolute', right: '-12px', top: '5%', transform: 'translateY(-50%)',
                 width: '28px', height: '28px', borderRadius: '50%',
                 background: '#fff', border: '1px solid #e2e8f0',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
