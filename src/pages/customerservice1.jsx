@@ -305,6 +305,7 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
 function ServiceImageCarousel({ images }) {
   const [current, setCurrent] = useState(0);
   const [lightbox, setLightbox] = useState(null);
+  const [hovered, setHovered] = useState(false);
   const total = images.length;
 
   const prev = () => setCurrent((c) => (c - 1 + total) % total);
@@ -366,7 +367,11 @@ function ServiceImageCarousel({ images }) {
       )}
 
       {/* Carousel */}
-      <div style={{ position: 'relative', width: '100%', marginTop: '0.5rem' }}>
+      <div
+        style={{ position: 'relative', width: '100%', marginTop: '0.5rem' }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
         {/* Main image */}
         <div
           style={{
@@ -403,19 +408,22 @@ function ServiceImageCarousel({ images }) {
           }}>🔍 tap to expand</div>
         </div>
 
-        {/* Prev / Next arrows — only show if multiple images */}
+        {/* Prev / Next arrows — centered on the image */}
         {total > 1 && (
           <>
             <button
               onClick={prev}
               style={{
-                position: 'absolute', left: '-12px', top: '50%', transform: 'translateY(-50%)',
+                position: 'absolute', left: '-12px', top: '35%', transform: 'translateY(-50%)',
                 width: '28px', height: '28px', borderRadius: '50%',
                 background: '#fff', border: '1px solid #e2e8f0',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
                 cursor: 'pointer', fontSize: '1rem', display: 'flex',
                 alignItems: 'center', justifyContent: 'center', color: '#334155',
-                transition: 'all 0.15s', zIndex: 2,
+                transition: 'opacity 0.2s ease, background 0.15s, color 0.15s',
+                opacity: hovered ? 1 : 0,
+                pointerEvents: hovered ? 'auto' : 'none',
+                zIndex: 2,
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#334155'; }}
@@ -423,13 +431,16 @@ function ServiceImageCarousel({ images }) {
             <button
               onClick={next}
               style={{
-                position: 'absolute', right: '-12px', top: '5%', transform: 'translateY(-50%)',
+                position: 'absolute', right: '-12px', top: '35%', transform: 'translateY(-50%)',
                 width: '28px', height: '28px', borderRadius: '50%',
                 background: '#fff', border: '1px solid #e2e8f0',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
                 cursor: 'pointer', fontSize: '1rem', display: 'flex',
                 alignItems: 'center', justifyContent: 'center', color: '#334155',
-                transition: 'all 0.15s', zIndex: 2,
+                transition: 'opacity 0.2s ease, background 0.15s, color 0.15s',
+                opacity: hovered ? 1 : 0,
+                pointerEvents: hovered ? 'auto' : 'none',
+                zIndex: 2,
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#334155'; }}

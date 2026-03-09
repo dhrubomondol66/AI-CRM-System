@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Play, AlertCircle, CheckCircle, Loader, RefreshCw, Trash2, Plus, Image as ImageIcon } from 'lucide-react';
+import { Play, AlertCircle, CheckCircle, Loader, RefreshCw, X, Plus, Image as ImageIcon } from 'lucide-react';
 import '../assets/styles/aiconfigaration.css';
 import Sidebar from '../components/Sidebar.jsx';
 import Cookies from 'js-cookie';
@@ -580,23 +580,27 @@ export default function AIConfiguration() {
                         <button
                           onClick={() => handleImageDelete(id)}
                           style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            background: '#ef4444',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '50%',
-                            width: '24px',
-                            height: '24px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            position: "absolute",
+                            top: "-8px",
+                            right: "-8px",
+                            background: "red",
+                            color: "white",
+                            fontWeight: "bold",
+                            border: "none",
+                            borderRadius: "50%",
+                            width: "18px",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            fontSize: "10px",
+                            fontWeight: "bold",
+                            lineHeight: "1",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
                           }}
                         >
-                          <Trash2 size={12} />
+                          ✕
                         </button>
                       </div>
                     );
