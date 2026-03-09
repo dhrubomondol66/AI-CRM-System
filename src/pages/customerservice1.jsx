@@ -301,6 +301,205 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
   );
 }
 
+// ── Service Image Carousel ────────────────────────────────────────────────
+function ServiceImageCarousel({ images }) {
+  const [current, setCurrent] = useState(0);
+  const [lightbox, setLightbox] = useState(null);
+  const total = images.length;
+
+  const prev = () => setCurrent((c) => (c - 1 + total) % total);
+  const next = () => setCurrent((c) => (c + 1) % total);
+
+  const getSrc = (img) =>
+    img.image_url || img.url || img.file || img.photo || (typeof img === 'string' ? img : null);
+
+  const getAlt = (img, i) => img.caption || img.alt || `Service image ${i + 1}`;
+
+  if (total === 0) return null;
+
+  return (
+    <>
+      {/* Lightbox overlay */}
+      {lightbox !== null && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+            zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'zoom-out',
+          }}
+        >
+          <img
+            src={getSrc(images[lightbox])}
+            alt={getAlt(images[lightbox], lightbox)}
+            style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: '12px', objectFit: 'contain' }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox((l) => (l - 1 + total) % total); }}
+            style={{
+              position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
+              width: '44px', height: '44px', borderRadius: '50%', fontSize: '1.4rem',
+              cursor: 'pointer', backdropFilter: 'blur(4px)',
+            }}
+          >‹</button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox((l) => (l + 1) % total); }}
+            style={{
+              position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)',
+              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
+              width: '44px', height: '44px', borderRadius: '50%', fontSize: '1.4rem',
+              cursor: 'pointer', backdropFilter: 'blur(4px)',
+            }}
+          >›</button>
+          <button
+            onClick={() => setLightbox(null)}
+            style={{
+              position: 'absolute', top: '16px', right: '20px',
+              background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
+              width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.1rem',
+              cursor: 'pointer',
+            }}
+          >✕</button>
+        </div>
+      )}
+
+      {/* Carousel */}
+      <div style={{ position: 'relative', width: '100%', marginTop: '0.5rem' }}>
+        {/* Main image */}
+        <div
+          style={{
+            width: '100%', height: '160px', borderRadius: '12px', overflow: 'hidden',
+            position: 'relative', background: '#f1f5f9', cursor: 'zoom-in',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          }}
+          onClick={() => setLightbox(current)}
+        >
+          <img
+            key={current}
+            src={getSrc(images[current])}
+            alt={getAlt(images[current], current)}
+            style={{
+              width: '100%', height: '100%', objectFit: 'cover',
+              animation: 'carouselFadeIn 0.35s ease',
+            }}
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          {/* Counter badge */}
+          <div style={{
+            position: 'absolute', bottom: '8px', right: '10px',
+            background: 'rgba(0,0,0,0.55)', color: '#fff',
+            fontSize: '0.65rem', fontWeight: '600', padding: '2px 8px',
+            borderRadius: '999px', letterSpacing: '0.04em',
+          }}>
+            {current + 1} / {total}
+          </div>
+          {/* Zoom hint */}
+          <div style={{
+            position: 'absolute', top: '8px', right: '10px',
+            background: 'rgba(0,0,0,0.45)', color: '#fff',
+            fontSize: '0.6rem', padding: '2px 7px', borderRadius: '999px',
+          }}>🔍 tap to expand</div>
+        </div>
+
+        {/* Prev / Next arrows — only show if multiple images */}
+        {total > 1 && (
+          <>
+            <button
+              onClick={prev}
+              style={{
+                position: 'absolute', left: '-12px', top: '50%', transform: 'translateY(-50%)',
+                width: '28px', height: '28px', borderRadius: '50%',
+                background: '#fff', border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                cursor: 'pointer', fontSize: '1rem', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', color: '#334155',
+                transition: 'all 0.15s', zIndex: 2,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#334155'; }}
+            >‹</button>
+            <button
+              onClick={next}
+              style={{
+                position: 'absolute', right: '-12px', top: '50%', transform: 'translateY(-50%)',
+                width: '28px', height: '28px', borderRadius: '50%',
+                background: '#fff', border: '1px solid #e2e8f0',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+                cursor: 'pointer', fontSize: '1rem', display: 'flex',
+                alignItems: 'center', justifyContent: 'center', color: '#334155',
+                transition: 'all 0.15s', zIndex: 2,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#2563eb'; e.currentTarget.style.color = '#fff'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#334155'; }}
+            >›</button>
+          </>
+        )}
+
+        {/* Dot indicators */}
+        {total > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '10px' }}>
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                style={{
+                  width: i === current ? '20px' : '7px',
+                  height: '7px',
+                  borderRadius: '999px',
+                  border: 'none',
+                  background: i === current ? '#2563eb' : '#cbd5e1',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'all 0.25s ease',
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Thumbnail strip */}
+        {total > 1 && (
+          <div style={{
+            display: 'flex', gap: '6px', marginTop: '10px',
+            overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'thin',
+          }}>
+            {images.map((img, i) => (
+              <div
+                key={i}
+                onClick={() => setCurrent(i)}
+                style={{
+                  flexShrink: 0, width: '44px', height: '44px',
+                  borderRadius: '7px', overflow: 'hidden', cursor: 'pointer',
+                  border: `2px solid ${i === current ? '#2563eb' : 'transparent'}`,
+                  opacity: i === current ? 1 : 0.55,
+                  transition: 'all 0.2s',
+                }}
+              >
+                <img
+                  src={getSrc(img)}
+                  alt={getAlt(img, i)}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Keyframe animation injected once */}
+      <style>{`
+        @keyframes carouselFadeIn {
+          from { opacity: 0; transform: scale(0.97); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </>
+  );
+}
+
 // ── Main page component ────────────────────────────────────────────────────
 export default function BookingAssistant() {
   const { business_slug } = useParams();
@@ -428,26 +627,43 @@ export default function BookingAssistant() {
 
   // ── Fetch service images when service selected ──────────────────────────
   useEffect(() => {
-    if (!selectedService || !selectedService.business_id) return;
+    if (!selectedService) return;
+
+    setServiceImages([]);
+
+    const extractImages = (data) => {
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.data)) return data.data;
+      if (Array.isArray(data?.images)) return data.images;
+      if (Array.isArray(data?.results)) return data.results;
+      if (data && typeof data === 'object') {
+        const key = Object.keys(data).find(k => Array.isArray(data[k]));
+        if (key) return data[key];
+      }
+      return [];
+    };
 
     const fetchImages = async () => {
       setImagesLoading(true);
       try {
+        // Try service-specific endpoint first
         const res = await api.get(
-          `/api/v1/admin/businesses/${selectedService.business_id}/services/${selectedService.id}/images`
+          `/api/v1/public/${business_slug}/services/${selectedService.id}/images/`
         );
-        let imgData = [];
-        if (Array.isArray(res.data)) imgData = res.data;
-        else if (Array.isArray(res.data?.data)) imgData = res.data.data;
-        else if (Array.isArray(res.data?.results)) imgData = res.data.results;
-        else if (res.data && typeof res.data === 'object') {
-          const key = Object.keys(res.data).find(k => Array.isArray(res.data[k]));
-          if (key) imgData = res.data[key];
-        }
+        const imgData = extractImages(res.data);
         setServiceImages(imgData);
       } catch (err) {
-        console.error('Error fetching service images:', err);
-        setServiceImages([]);
+        // Fallback: try business-level images endpoint
+        try {
+          const res2 = await api.get(
+            `/api/v1/public/services/${selectedService.id}/images/`
+          );
+          const imgData = extractImages(res2.data);
+          setServiceImages(imgData);
+        } catch {
+          console.error('Could not fetch service images:', err);
+          setServiceImages([]);
+        }
       } finally {
         setImagesLoading(false);
       }
@@ -733,37 +949,28 @@ export default function BookingAssistant() {
                       </div>
                     )}
 
-                    {/* ── Images Section ── */}
-                    {serviceImages.length > 0 && (
-                      <div className="service-images-section" style={{ marginTop: '1.5rem' }}>
-                        <div className="section-title-small" style={{ fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem' }}>
-                          SERVICE GALLERY
-                        </div>
-                        <div className="images-scroll" style={{
-                          display: 'flex',
-                          gap: '10px',
-                          overflowX: 'auto',
-                          paddingBottom: '10px',
-                          scrollbarWidth: 'thin'
+                    {/* ── Images Carousel Section ── */}
+                    {(imagesLoading || serviceImages.length > 0) && (
+                      <div style={{ marginTop: '1.5rem', paddingLeft: '14px', paddingRight: '14px' }}>
+                        <div style={{
+                          fontWeight: '600', fontSize: '0.7rem', color: '#64748b',
+                          letterSpacing: '0.08em', marginBottom: '0.75rem',
+                          display: 'flex', alignItems: 'center', gap: '6px',
                         }}>
-                          {serviceImages.map((img, i) => (
-                            <div key={img.id || i} style={{ flexShrink: 0 }}>
-                              <img
-                                src={img.image_url || img.url || (typeof img === 'string' ? img : null)}
-                                alt={`Service gallery ${i + 1}`}
-                                style={{
-                                  width: '100px',
-                                  height: '100px',
-                                  objectFit: 'cover',
-                                  borderRadius: '10px',
-                                  border: '1px solid #e2e8f0',
-                                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-                                }}
-                                onError={(e) => { e.target.style.display = 'none'; }}
-                              />
-                            </div>
-                          ))}
+                          <span>📸</span> SERVICE GALLERY
                         </div>
+                        {imagesLoading ? (
+                          <div style={{
+                            height: '160px', borderRadius: '12px', background: '#f1f5f9',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                              Loading images...
+                            </p>
+                          </div>
+                        ) : (
+                          <ServiceImageCarousel images={serviceImages} />
+                        )}
                       </div>
                     )}
                   </>
