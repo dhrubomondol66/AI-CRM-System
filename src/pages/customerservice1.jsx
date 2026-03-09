@@ -1018,8 +1018,29 @@ export default function BookingAssistant() {
                         display: 'flex', flexDirection: 'column', gap: '0.6rem',
                         maxHeight: '260px', overflowY: 'auto', paddingRight: '2px',
                       }}>
-                        {reviews.map((review, i) => {
-                          const name = review.reviewer_name ?? review.name ?? 'Anonymous';
+                        {reviews.slice(-3).reverse().map((review, i) => {
+                          const name =
+                            review.reviewer_name ??
+                            review.user_name ??
+                            review.username ??
+                            review.full_name ??
+                            review.customer_name ??
+                            review.author_name ??
+                            review.author ??
+                            review.name ??
+                            (review.user?.full_name) ??
+                            (review.user?.name) ??
+                            (review.user?.username) ??
+                            (review.user?.first_name
+                              ? `${review.user.first_name} ${review.user.last_name ?? ''}`.trim()
+                              : null) ??
+                            (review.customer?.full_name) ??
+                            (review.customer?.name) ??
+                            (review.first_name
+                              ? `${review.first_name} ${review.last_name ?? ''}`.trim()
+                              : null) ??
+                            review.email?.split('@')[0] ??
+                            'Guest';
                           const initial = name[0].toUpperCase();
                           const hue = (name.charCodeAt(0) * 37) % 360;
 

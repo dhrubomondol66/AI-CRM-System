@@ -769,7 +769,7 @@ export default function ReservationCRM() {
               </div>
             )}
           </div>
-          <div className="status-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <div className="status-card" style={{ maxWidth: '600px', margin: '0 auto'}}>
             <div style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '10px' }}>
                 Enter your unique tracking code to share your feedback.
@@ -824,6 +824,15 @@ export default function ReservationCRM() {
                 <ReviewDropdown trackingId={reviewTrackingId} initialOpen={true} />
               </div>
             )}
+            {/* if you didn't get any confirmation email or sms please check your spam folder or contact us */}
+            <div style={{
+              background: '#ffffffff', border: '1px solid #a0a0a0ff',
+              borderRadius: '8px', padding: '12px', marginTop: '25px',
+              color: '#8d8585ff', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px'
+            }}>
+              <AlertCircle size={15} />
+              If you didn't get any confirmation email or sms please check your folder or contact us
+            </div>
           </div>
         </div>
       </section>
