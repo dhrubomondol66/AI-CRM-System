@@ -303,7 +303,7 @@ export default function AIReservationCRM() {
             <AlertCircle size={15} />
             <span>{error}</span>
           </div>
-        )} <hr style={{ backgroundColor: 'black', height: '1px' }} />
+        )} 
 
         {/* ── Search ── */}
         <div
@@ -317,8 +317,8 @@ export default function AIReservationCRM() {
               display: 'flex',
               alignItems: 'center',
               width: '50%',
-              minWidth: '280px',
-              maxWidth: '640px',
+              // minWidth: '280px',
+              // maxWidth: '640px',
             }}
           >
             <Search className="search-icon" />
@@ -328,6 +328,7 @@ export default function AIReservationCRM() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
+              style={{ height: '50px', width: '100%', borderRadius: '10px', border: '1px solid #ffffffff', color: '#000000', backgroundColor: '#ffffffff', fontSize: '16px'}}
             />
           </div>
         </div>
