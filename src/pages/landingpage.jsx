@@ -835,7 +835,7 @@ export default function ReservationCRM() {
             </div>
           </div>
         </div>
-      </section>
+      </section><hr />
 
       {/* ── Review by Tracking ID ── */}
       {/* <section id="reviews" className="review-section" style={{ background: '#f8fafc', padding: '4rem 0' }}>
@@ -871,7 +871,7 @@ export default function ReservationCRM() {
             </div>
 
             {/* Contact form */}
-            <div className="form-card">
+            <div className="form-card" style={{ marginTop: '30px' }}>
               <form onSubmit={handleSendMessage} className="form-fields" noValidate>
                 <input
                   type="text"
