@@ -777,7 +777,7 @@ export default function ReservationCRM() {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input
                   type="text"
-                  placeholder="e.g. TRK-123456"
+                  placeholder="e.g. BK-123456"
                   className="input-field"
                   value={reviewInput}
                   onChange={(e) => {
