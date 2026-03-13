@@ -17,6 +17,8 @@ import Profile from './pages/profile.jsx';
 import ChangePassword from './auth/changePassword.jsx';
 import { PlatformProvider } from './pages/platformContext';
 import PlatformContact from './pages/platformContact.jsx';
+import PaymentSuccess from './pages/paymentSuccess.jsx';
+import PaymentCancel from './pages/paymentCancelled.jsx';
 
 
 
@@ -25,11 +27,19 @@ function App() {
     <PlatformProvider>
       <Router>
         <Routes>
-          <Route path="/:business_slug?" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/customerservice/:business_slug" element={<CustomerService />} />
           <Route path="/customerservices" element={<CustomerServices />} />
           <Route path="/customerservice" element={<CustomerService />} />
           <Route path="/paymentsystem" element={<BookingPayment />} />
+          <Route path="/payment/success/*" element={<PaymentSuccess />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/paymentsuccess" element={<PaymentSuccess />} />
+          <Route path="/payment/cancelled/*" element={<PaymentCancel />} />
+          <Route path="/payment-cancel" element={<PaymentCancel />} />
+          <Route path="/payment-cancelled" element={<PaymentCancel />} />
+          <Route path="/payment/cancel/*" element={<PaymentCancel />} />
+          <Route path="/payment-confirmation" element={<PaymentSuccess />} />
           <Route path="/adminDashboard/*" element={<AdminDashboard />} />
           <Route path="/adminBooking/*" element={<AdminBooking />} />
           <Route path="/aiconfiguration/*" element={<AdminConfiguration />} />
@@ -43,6 +53,7 @@ function App() {
           <Route path="/profile/*" element={<Profile />} />
           <Route path="/change-password/*" element={<ChangePassword />} />
           <Route path="/platformContact/*" element={<PlatformContact />} />
+          <Route path="/:business_slug?" element={<LandingPage />} />
         </Routes>
       </Router>
     </PlatformProvider>
