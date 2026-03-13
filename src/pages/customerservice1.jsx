@@ -542,6 +542,7 @@ export default function BookingAssistant() {
   const [avgRating, setAvgRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   // ── Images state ─────────────────────────────────────────────────────────
   const [serviceImages, setServiceImages] = useState([]);
@@ -601,6 +602,7 @@ export default function BookingAssistant() {
     setReviews([]);
     setAvgRating(0);
     setTotalReviews(0);
+    setShowAllReviews(false);
 
     const fetchReviews = async () => {
       setReviewsLoading(true);
@@ -1018,88 +1020,118 @@ export default function BookingAssistant() {
                         display: 'flex', flexDirection: 'column', gap: '0.6rem',
                         maxHeight: '260px', overflowY: 'auto', paddingRight: '2px',
                       }}>
-                        {reviews.slice(-3).reverse().map((review, i) => {
-                          const name =
-                            review.reviewer_name ??
-                            review.user_name ??
-                            review.username ??
-                            review.full_name ??
-                            review.customer_name ??
-                            review.author_name ??
-                            review.author ??
-                            review.name ??
-                            (review.user?.full_name) ??
-                            (review.user?.name) ??
-                            (review.user?.username) ??
-                            (review.user?.first_name
-                              ? `${review.user.first_name} ${review.user.last_name ?? ''}`.trim()
-                              : null) ??
-                            (review.customer?.full_name) ??
-                            (review.customer?.name) ??
-                            (review.first_name
-                              ? `${review.first_name} ${review.last_name ?? ''}`.trim()
-                              : null) ??
-                            review.email?.split('@')[0] ??
-                            'Guest';
-                          const initial = name[0].toUpperCase();
-                          const hue = (name.charCodeAt(0) * 37) % 360;
+                        {(() => {
+                          const sortedReviews = [...reviews].sort((a, b) => {
+                            const dateA = new Date(a.created_at ?? a.date ?? 0);
+                            const dateB = new Date(b.created_at ?? b.date ?? 0);
+                            return dateB - dateA;
+                          });
+                          const displayedReviews = showAllReviews ? sortedReviews : sortedReviews.slice(0, 3);
 
-                          return (
-                            <div key={review.id ?? i} style={{
-                              background: '#f8fafc',
-                              border: '1px solid #e2e8f0',
-                              borderRadius: '10px',
-                              padding: '0.65rem 0.75rem',
-                            }}>
-                              {/* Top row: avatar + name + stars */}
-                              <div style={{
-                                display: 'flex', alignItems: 'center',
-                                justifyContent: 'space-between', marginBottom: '6px',
+                          return displayedReviews.map((review, i) => {
+                            const name =
+                              review.reviewer_name ??
+                              review.user_name ??
+                              review.username ??
+                              review.full_name ??
+                              review.customer_name ??
+                              review.author_name ??
+                              review.author ??
+                              review.name ??
+                              (review.user?.full_name) ??
+                              (review.user?.name) ??
+                              (review.user?.username) ??
+                              (review.user?.first_name
+                                ? `${review.user.first_name} ${review.user.last_name ?? ''}`.trim()
+                                : null) ??
+                              (review.customer?.full_name) ??
+                              (review.customer?.name) ??
+                              (review.first_name
+                                ? `${review.first_name} ${review.last_name ?? ''}`.trim()
+                                : null) ??
+                              review.email?.split('@')[0] ??
+                              'Guest';
+                            const initial = name[0].toUpperCase();
+                            const hue = (name.charCodeAt(0) * 37) % 360;
+
+                            return (
+                              <div key={review.id ?? i} style={{
+                                background: '#f8fafc',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '10px',
+                                padding: '0.65rem 0.75rem',
                               }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                  {/* Coloured avatar initial */}
-                                  <div style={{
-                                    width: '26px', height: '26px', borderRadius: '50%',
-                                    background: `hsl(${hue}, 55%, 60%)`,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '0.65rem', fontWeight: '700', color: 'white', flexShrink: 0,
-                                  }}>
-                                    {initial}
-                                  </div>
-                                  <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1e293b' }}>
-                                    {name}
-                                  </span>
-                                </div>
-
-                                {/* Star rating */}
-                                <div style={{ display: 'flex', gap: '1px' }}>
-                                  {[1, 2, 3, 4, 5].map((s) => (
-                                    <StarIcon key={s} filled={(review.rating ?? 0) >= s} size={10} />
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Comment */}
-                              {review.comment && (
-                                <p style={{
-                                  fontSize: '0.75rem', color: '#475569',
-                                  lineHeight: '1.45', margin: '0 0 4px 0',
+                                {/* Top row: avatar + name + stars */}
+                                <div style={{
+                                  display: 'flex', alignItems: 'center',
+                                  justifyContent: 'space-between', marginBottom: '6px',
                                 }}>
-                                  "{review.comment}"
-                                </p>
-                              )}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                                    {/* Coloured avatar initial */}
+                                    <div style={{
+                                      width: '26px', height: '26px', borderRadius: '50%',
+                                      background: `hsl(${hue}, 55%, 60%)`,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontSize: '0.65rem', fontWeight: '700', color: 'white', flexShrink: 0,
+                                    }}>
+                                      {initial}
+                                    </div>
+                                    <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#1e293b' }}>
+                                      {name}
+                                    </span>
+                                  </div>
 
-                              {/* Date */}
-                              {(review.created_at ?? review.date) && (
-                                <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0 }}>
-                                  {new Date(review.created_at ?? review.date).toLocaleDateString('en-US', {
-                                    month: 'short', day: 'numeric', year: 'numeric',
-                                  })}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        })}
+                                  {/* Star rating */}
+                                  <div style={{ display: 'flex', gap: '1px' }}>
+                                    {[1, 2, 3, 4, 5].map((s) => (
+                                      <StarIcon key={s} filled={(review.rating ?? 0) >= s} size={10} />
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Comment */}
+                                {review.comment && (
+                                  <p style={{
+                                    fontSize: '0.75rem', color: '#475569',
+                                    lineHeight: '1.45', margin: '0 0 4px 0',
+                                  }}>
+                                    "{review.comment}"
+                                  </p>
+                                )}
+
+                                {/* Date */}
+                                {(review.created_at ?? review.date) && (
+                                  <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: 0 }}>
+                                    {new Date(review.created_at ?? review.date).toLocaleDateString('en-US', {
+                                      month: 'short', day: 'numeric', year: 'numeric',
+                                    })}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          });
+                        })()}
+
+                        {reviews.length > 3 && (
+                          <button
+                            onClick={() => setShowAllReviews(!showAllReviews)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#2563eb',
+                              fontSize: '0.75rem',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              padding: '0.5rem 0',
+                              textAlign: 'left',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {showAllReviews ? 'See Less' : `See More (${reviews.length - 3} more)`}
+                          </button>
+                        )}
                       </div>
                     )}
                   </>
