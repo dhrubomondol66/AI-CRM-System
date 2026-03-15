@@ -499,8 +499,7 @@ body {
 .service-header {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 1rem;
+  justify-content: left;
 }
 
 .service-icon {
@@ -520,7 +519,6 @@ body {
   font-size: 1.25rem;
   font-weight: 700;
   color: #111827;
-  margin-bottom: 0.5rem;
 }
 
 .service-description {
@@ -675,7 +673,8 @@ body {
   height: 40px;
   object-fit: cover;
   border-radius: 8px;
-  margin-bottom: 0.5rem;
+  margin-top: 0.4rem;
+  margin-right: 0.4rem;
   border: 1px solid #e5e7eb;
 }
 

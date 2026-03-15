@@ -303,7 +303,7 @@ export default function AIReservationCRM() {
             <AlertCircle size={15} />
             <span>{error}</span>
           </div>
-        )} 
+        )}
 
         {/* ── Search ── */}
         <div
@@ -328,7 +328,7 @@ export default function AIReservationCRM() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
-              style={{ height: '50px', width: '100%', borderRadius: '10px', border: '1px solid #ffffffff', color: '#000000', backgroundColor: '#ffffffff', fontSize: '16px'}}
+              style={{ height: '50px', width: '100%', borderRadius: '10px', border: '1px solid #ffffffff', color: '#000000', backgroundColor: '#ffffffff', fontSize: '16px' }}
             />
           </div>
         </div>
@@ -358,11 +358,11 @@ export default function AIReservationCRM() {
                       {service.badge && (
                         <span className="service-badge">{service.badge}</span>
                       )}
+                      <div className="service-title-container">
+                        <h3 className="service-title">{service.title}</h3>
+                        <p className="service-description">{service.description}</p>
+                      </div>
                     </div>
-
-                    <h3 className="service-title">{service.title}</h3>
-                    <p className="service-description">{service.description}</p>
-
                     <div className="service-details">
                       {service.duration && (
                         <div className="service-detail-item">
