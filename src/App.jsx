@@ -21,6 +21,7 @@ import PaymentSuccess from './pages/paymentSuccess.jsx';
 import PaymentCancel from './pages/paymentCancelled.jsx';
 
 
+import ChatWidget from './chat/ChatWidget.jsx';
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
           <Route path="/platformContact/*" element={<PlatformContact />} />
           <Route path="/:business_slug?" element={<LandingPage />} />
         </Routes>
+        <ChatWidget />
       </Router>
     </PlatformProvider>
   );

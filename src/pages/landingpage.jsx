@@ -53,11 +53,11 @@ const formatBackendError = (err) => {
     if (backendMsg && (backendMsg.toLowerCase().includes('confirm') || backendMsg.toLowerCase().includes('pay'))) {
       return 'Your booking status is not confirmed yet!... please pay to confirm your booking';
     }
-    return backendMsg || 'Bad Request (400). Please check your inputs.';
+    return backendMsg || 'Please enter the correct inputs.';
   }
 
-  if (status === 404) return 'Contact endpoint not found (404). Check backend route.';
-  if (status === 422) return 'Validation error — please check your inputs.';
+  if (status === 404) return 'Enter the correct ID';
+  if (status === 422) return 'Please enter the correct inputs.';
   if (status >= 500) return 'Server error. Please try again later.';
 
   return (
@@ -478,7 +478,7 @@ export default function ReservationCRM() {
                 <h2>AI Receptionist</h2>
               </div>
               <div className="chat-status">
-                <span className="online">⚫ Online 24/7</span>
+                <span className="online">🟢Online 24/7</span>
               </div>
             </div>
 
