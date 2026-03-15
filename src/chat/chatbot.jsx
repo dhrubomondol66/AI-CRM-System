@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../assets/styles/chat-widget.css';
 import chatbot from '../assets/icons8-chat-bot-50.png';
 import close from '../assets/icons8-sort-down-24.png';
+import send from '../assets/sending.png';
 
 /**
  * ChatBot Component
@@ -92,7 +93,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
           style={{color:"black"}}
         />
         <button type="submit" className="widget-send-button" disabled={!message.trim()}>
-          <img src="/src/assets/sending.png" alt="send" />
+          <img src={send} alt="send" />
         </button>
       </form>
     </div>
