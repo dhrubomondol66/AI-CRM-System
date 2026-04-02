@@ -3,11 +3,20 @@ import '../assets/styles/chat-widget.css';
 import chatbot from '../assets/icons8-chat-bot-50.png';
 import close from '../assets/icons8-sort-down-24.png';
 import send from '../assets/sending.png';
+import axios from 'axios';
 
 /**
  * ChatBot Component
  * A premium chat interface that can be used as a standalone component or within the widget.
  */
+
+const chatbotapi = axios.create({
+  baseURL: 'https://ai-reservation.onrender.com/api/global-chat/',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 const ChatBot = ({ isWidget = true, onClose }) => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([
@@ -23,7 +32,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
 
@@ -37,16 +46,32 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     setMessages([...messages, newMessage]);
     setMessage('');
 
-    // Simulate AI thinking and response
-    setTimeout(() => {
+    try {
+      // Call the chatbot API
+      const response = await chatbotapi.post('', {
+        message: message,
+        user_id: 'user_' + Date.now(), // Generate a temporary user ID
+        session_id: 'session_' + Date.now() // Generate a temporary session ID
+      });
+
       const aiResponse = {
         id: Date.now() + 1,
-        text: "I'm processing your request. Our CRM system is designed to streamline your business operations. Is there a specific feature you'd like to know more about?",
+        text: response.data?.response || "I'm processing your request. Our CRM system is designed to streamline your business operations. Is there a specific feature you'd like to know more about?",
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, aiResponse]);
-    }, 1500);
+    } catch (error) {
+      // Fallback response if API fails
+      const fallbackResponse = {
+        id: Date.now() + 1,
+        text: "I'm having trouble connecting right now, but I'm here to help! Our CRM system can help you manage reservations, track customers, and grow your business. What would you like to know?",
+        sender: 'ai',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, fallbackResponse]);
+      console.error('Chatbot API error:', error);
+    }
   };
 
   return (

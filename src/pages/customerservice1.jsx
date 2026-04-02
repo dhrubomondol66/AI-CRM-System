@@ -1168,7 +1168,7 @@ export default function BookingAssistant() {
               {/* Chat Header */}
               <div className="chat-header">
                 <div className="assistant-info">
-                  <div className="assistant-avatar"><div className="avatar-circle" /></div>
+                  <div className="assistant-avatar" style={{marginTop: '-13px'}}><div className="avatar-circle" /></div>
                   <div>
                     <h3 className="assistant-name">AI Booking Assistant</h3>
                     <p className="assistant-status">
