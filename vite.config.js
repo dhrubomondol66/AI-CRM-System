@@ -30,6 +30,23 @@ export default defineConfig({
             res.end('Proxy error: ' + proxyErr.message);
           });
         }
+      },
+      '/api/global-chat': {
+        target: 'https://ai-reservation.onrender.com',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace('/api/global-chat', '/api/global-chat'),
+        configure: (proxy, options) => {
+          proxy.on('error', (err) => {
+            console.error('Chatbot proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req) => {
+            console.log(`[Chatbot Proxy] ${req.method} ${req.url} -> ${options.target}${req.url}`);
+          });
+          proxy.on('proxyRes', (proxyRes, req) => {
+            console.log('Chatbot proxy response:', proxyRes.statusCode);
+          });
+        }
       }
     }
   }

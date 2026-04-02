@@ -11,7 +11,7 @@ import axios from 'axios';
  */
 
 const chatbotapi = axios.create({
-  baseURL: 'https://ai-reservation.onrender.com/api/global-chat/',
+  baseURL: '/api/global-chat/',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -54,9 +54,11 @@ const ChatBot = ({ isWidget = true, onClose }) => {
         session_id: 'session_' + Date.now() // Generate a temporary session ID
       });
 
+      console.log('Chatbot API response:', response.data);
+
       const aiResponse = {
         id: Date.now() + 1,
-        text: response.data?.response || "I'm processing your request. Our CRM system is designed to streamline your business operations. Is there a specific feature you'd like to know more about?",
+        text: response.data?.response || response.data?.message || response.data?.answer || response.data?.text || JSON.stringify(response.data),
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
