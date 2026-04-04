@@ -12,30 +12,15 @@ import axios from 'axios';
 
 const chatbotapi = axios.create({
   baseURL: import.meta.env.PROD 
-    ? '/api/global-chat/'  // Try to use a backend route first
+    ? 'https://ai-reservation.onrender.com/api/global-chat/'  // Direct API in production
     : '/api/global-chat/', // Development proxy
   headers: {
     'Content-Type': 'application/json',
   },
+  ...(import.meta.env.PROD && {
+    withCredentials: false, // Handle CORS in production
+  })
 });
-
-// Mock CRM responses for production when CORS blocks API
-const mockCRMResponses = [
-  "I can help you manage your reservations! Our CRM system allows you to track bookings, send automated reminders, and manage customer data efficiently. What specific feature would you like to know about?",
-  "Our booking management system includes real-time availability tracking, automated confirmations, and customer communication tools. Would you like to know more about any of these features?",
-  "The CRM analytics dashboard provides insights on booking trends, customer preferences, and revenue performance. This helps you make data-driven business decisions.",
-  "Customer management is made easy with our system! You can track customer history, preferences, special requests, and maintain personalized communication.",
-  "Our automated messaging system can send booking confirmations, reminders, and follow-ups via email and SMS. This reduces no-shows and improves customer satisfaction.",
-  "The system supports multiple business types including restaurants, spas, medical clinics, and service-based businesses. Each can be customized to your specific needs.",
-  "Payment processing is integrated seamlessly with secure payment gateways. You can accept deposits, full payments, and manage refunds through the system.",
-  "Staff management features allow you to assign bookings, track performance, and manage schedules. Everything is designed to streamline your operations.",
-  "Would you like to know about our mobile app? Customers can book appointments and manage their reservations from their smartphones.",
-  "Our reporting tools help you track key metrics like occupancy rates, revenue trends, and customer satisfaction scores. Perfect for business planning!"
-];
-
-const getRandomCRMResponse = () => {
-  return mockCRMResponses[Math.floor(Math.random() * mockCRMResponses.length)];
-};
 
 const ChatBot = ({ isWidget = true, onClose }) => {
   const [message, setMessage] = useState('');
@@ -67,46 +52,19 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     setMessage('');
 
     try {
-      let response;
-      let apiUsed = 'proxy';
+      // Call the chatbot API directly
+      const response = await chatbotapi.post('', {
+        message: message,
+        user_id: 'user_' + Date.now(),
+        session_id: 'session_' + Date.now()
+      });
 
-      // First try the proxy/route approach
-      try {
-        response = await chatbotapi.post('', {
-          message: message,
-          user_id: 'user_' + Date.now(),
-          session_id: 'session_' + Date.now()
-        });
+      console.log('Chatbot API response:', response.data);
 
-        // Check if response is HTML (indicating a routing/proxy issue)
-        if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {
-          console.log('Received HTML response, using mock CRM response');
-          const mockResponse = {
-            data: {
-              response: getRandomCRMResponse()
-            }
-          };
-          response = mockResponse;
-          apiUsed = 'mock-html-fallback';
-        }
-      } catch (proxyError) {
-        console.log('Proxy API failed, using mock CRM response:', proxyError.message);
-        
-        // In production, use mock responses when CORS blocks the API
-        if (import.meta.env.PROD && proxyError.message?.includes('CORS')) {
-          const mockResponse = {
-            data: {
-              response: getRandomCRMResponse()
-            }
-          };
-          response = mockResponse;
-          apiUsed = 'mock';
-        } else {
-          throw proxyError;
-        }
+      // Check if response is HTML (indicating a routing/proxy issue)
+      if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {
+        throw new Error('API returned HTML instead of JSON - routing configuration issue');
       }
-
-      console.log(`Chatbot API response (${apiUsed}):`, response.data);
 
       const aiResponse = {
         id: Date.now() + 1,
@@ -118,16 +76,14 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     } catch (error) {
       console.error('Chatbot API error:', error);
       
-      // Enhanced fallback response with more context
-      const fallbackResponse = {
+      // Simple error response when backend fails
+      const errorResponse = {
         id: Date.now() + 1,
-        text: import.meta.env.PROD 
-          ? getRandomCRMResponse()
-          : "I'm having trouble connecting right now, but I'm here to help! Our CRM system can help you manage reservations, track customers, and grow your business. What would you like to know?",
+        text: "Sorry, I'm having trouble connecting to the chatbot service right now. Please try again later.",
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      setMessages(prev => [...prev, fallbackResponse]);
+      setMessages(prev => [...prev, errorResponse]);
     }
   };
 
