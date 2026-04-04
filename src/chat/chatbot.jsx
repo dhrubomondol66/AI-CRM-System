@@ -77,6 +77,18 @@ const ChatBot = ({ isWidget = true, onClose }) => {
           user_id: 'user_' + Date.now(),
           session_id: 'session_' + Date.now()
         });
+
+        // Check if response is HTML (indicating a routing/proxy issue)
+        if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {
+          console.log('Received HTML response, using mock CRM response');
+          const mockResponse = {
+            data: {
+              response: getRandomCRMResponse()
+            }
+          };
+          response = mockResponse;
+          apiUsed = 'mock-html-fallback';
+        }
       } catch (proxyError) {
         console.log('Proxy API failed, using mock CRM response:', proxyError.message);
         
@@ -95,18 +107,6 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       }
 
       console.log(`Chatbot API response (${apiUsed}):`, response.data);
-
-      // Check if response is HTML (indicating a routing/proxy issue)
-      if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {
-        // Use mock response for HTML issues too
-        const mockResponse = {
-          data: {
-            response: getRandomCRMResponse()
-          }
-        };
-        response = mockResponse;
-        apiUsed = 'mock-html-fallback';
-      }
 
       const aiResponse = {
         id: Date.now() + 1,
