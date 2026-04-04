@@ -11,10 +11,15 @@ import axios from 'axios';
  */
 
 const chatbotapi = axios.create({
-  baseURL: '/api/global-chat/',
+  baseURL: import.meta.env.PROD 
+    ? 'https://ai-reservation.onrender.com/api/global-chat/'
+    : '/api/global-chat/',
   headers: {
     'Content-Type': 'application/json',
   },
+  ...(import.meta.env.PROD && {
+    withCredentials: false, // Don't send credentials for cross-origin requests
+  })
 });
 
 const ChatBot = ({ isWidget = true, onClose }) => {
@@ -56,6 +61,11 @@ const ChatBot = ({ isWidget = true, onClose }) => {
 
       console.log('Chatbot API response:', response.data);
 
+      // Check if response is HTML (indicating a routing/proxy issue)
+      if (typeof response.data === 'string' && response.data.includes('<!doctype html>')) {
+        throw new Error('API returned HTML instead of JSON - proxy configuration issue');
+      }
+
       const aiResponse = {
         id: Date.now() + 1,
         text: response.data?.response || response.data?.message || response.data?.answer || response.data?.text || JSON.stringify(response.data),
@@ -64,15 +74,18 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       };
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
-      // Fallback response if API fails
+      console.error('Chatbot API error:', error);
+      
+      // Enhanced fallback response with more context
       const fallbackResponse = {
         id: Date.now() + 1,
-        text: "I'm having trouble connecting right now, but I'm here to help! Our CRM system can help you manage reservations, track customers, and grow your business. What would you like to know?",
+        text: import.meta.env.PROD 
+          ? "I'm currently experiencing connection issues in the production environment. This is a known issue with cross-origin requests. I can still help you with: 📅 Booking management, 📊 Customer tracking, 💼 Business analytics, and 🚀 CRM features. What would you like to know about?"
+          : "I'm having trouble connecting right now, but I'm here to help! Our CRM system can help you manage reservations, track customers, and grow your business. What would you like to know?",
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, fallbackResponse]);
-      console.error('Chatbot API error:', error);
     }
   };
 
