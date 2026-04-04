@@ -11,15 +11,12 @@ import axios from 'axios';
  */
 
 const chatbotapi = axios.create({
-  baseURL: import.meta.env.PROD 
-    ? 'https://ai-reservation.onrender.com/api/global-chat/'  // Direct API in production
-    : '/api/global-chat/', // Development proxy
+  baseURL: import.meta.env.PROD
+    ? "https://ai-reservation.onrender.com"   // ONLY domain
+    : "",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  ...(import.meta.env.PROD && {
-    withCredentials: false, // Handle CORS in production
-  })
 });
 
 const ChatBot = ({ isWidget = true, onClose }) => {
@@ -52,8 +49,11 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     setMessage('');
 
     try {
-      // Call the chatbot API directly
-      const response = await chatbotapi.post('', {
+      // Debug log to confirm API URL
+      console.log("API URL:", chatbotapi.defaults.baseURL);
+      
+      // Call the chatbot API with full endpoint path
+      const response = await chatbotapi.post('/api/global-chat/', {
         message: message,
         user_id: 'user_' + Date.now(),
         session_id: 'session_' + Date.now()
