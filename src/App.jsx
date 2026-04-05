@@ -22,6 +22,7 @@ import PaymentCancel from './pages/paymentCancelled.jsx';
 
 
 import ChatWidget from './chat/ChatWidget.jsx';
+import ChatbotConfig from './pages/chatbotConfig.jsx';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/customerservice/:business_slug" element={<CustomerService />} />
+          <Route path="/receptionist/:business_slug" element={<CustomerService />} />
           <Route path="/customerservices" element={<CustomerServices />} />
           <Route path="/customerservice" element={<CustomerService />} />
           <Route path="/paymentsystem" element={<BookingPayment />} />
@@ -54,6 +56,7 @@ function App() {
           <Route path="/profile/*" element={<Profile />} />
           <Route path="/change-password/*" element={<ChangePassword />} />
           <Route path="/platformContact/*" element={<PlatformContact />} />
+          <Route path="/chatbot/*" element={<ChatbotConfig />} />
           <Route path="/:business_slug?" element={<LandingPage />} />
         </Routes>
         <ChatWidget />

@@ -9,7 +9,8 @@ import {
   LogOut,
   Sliders,
   Briefcase,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import '../assets/styles/sidebar.css';
 import logo from '../assets/logo.png.png';
@@ -24,7 +25,8 @@ const menuRoutes = {
   'Analytics': '/analytics',
   'Settings': '/settings',
   'Change Password': '/change-password',
-  'Profile': '/profile'
+  'Profile': '/profile',
+  'Chatbot': '/chatbot'
 };
 
 // Map routes to menu names (for detecting active menu from URL)
@@ -36,7 +38,8 @@ const routeToMenu = {
   '/analytics': 'Analytics',
   '/settings': 'Settings',
   '/change-password': 'Change Password',
-  '/profile': 'Profile'
+  '/profile': 'Profile',
+  '/chatbot': 'Chatbot'
 };
 
 const Sidebar = () => {
@@ -101,6 +104,10 @@ const Sidebar = () => {
         >
           <Sliders className="menu-icon" />
           <span>AI Configuration</span>
+        </button>
+        <button className={`menu-item ${activeMenu === 'Chatbot' ? 'active' : ''}`} onClick={() => handleMenuClick('Chatbot')}>
+          <MessageSquare className="menu-icon" />
+          <span>Chatbot</span>
         </button>
       </nav>
 

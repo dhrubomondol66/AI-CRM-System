@@ -316,7 +316,7 @@ const AdminProfileDashboard = () => {
         </div>
 
         {/* ── Right Column ── */}
-        <div className="right-col">
+        {/* <div className="right-col">
           <section className="section">
             <h2 className="section-title">
               <img src={notification} alt="notification" className="notification-icon" />
@@ -346,7 +346,7 @@ const AdminProfileDashboard = () => {
               </div>
             </div>
           </section>
-        </div>
+        </div> */}
 
       </div>
     </div>

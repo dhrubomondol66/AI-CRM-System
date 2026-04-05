@@ -247,6 +247,17 @@
   border-color: var(--chat-primary);
 }
 
+.widget-voice-button{
+  background-color: rgb(219, 217, 217)  ;
+  border: none; 
+  cursor: pointer;
+  padding: 0;
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  transition: background-color 0.2s;
+}
+
 .widget-send-button {
   background: var(--chat-primary);
   color: white;

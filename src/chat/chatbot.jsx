@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { usePlatform } from '../pages/platformContext';
 import '../assets/styles/chat-widget.css';
 import chatbot from '../assets/icons8-chat-bot-50.png';
 import close from '../assets/icons8-sort-down-24.png';
@@ -19,12 +21,124 @@ const chatbotapi = axios.create({
   },
 });
 
+
 const ChatBot = ({ isWidget = true, onClose }) => {
+  const navigate = useNavigate();
+  const { platformName } = usePlatform();
+  const { business_slug } = useParams();
+
   const [message, setMessage] = useState('');
+  
+  const businessNameSlug = business_slug || platformName?.toLowerCase()
+    ?.replace(/[^a-z0-9\s-]/g, '')
+    ?.replace(/\s+/g, '-')
+    ?.replace(/-+/g, '-');
+    
+  const baseUrl = window.location.origin;
+
   const [messages, setMessages] = useState([
-    { id: 1, text: "Hello! I'm your AI assistant. How can I help you manage your business today?", sender: 'ai', time: '10:00 AM' },
+    { 
+      id: 1, 
+      text: `Hello! I'm your AI assistant. How can I help you manage your business today?`,
+      sender: 'ai', 
+      time: '10:00 AM' 
+    },
   ]);
   const messagesEndRef = useRef(null);
+
+  const handleBusinessLink = () => {
+    // Navigate to /receptionist/{businessName}
+    const businessName = business_slug || platformName.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-')        // Replace spaces with -
+      .replace(/-+/g, '-');        // Remove consecutive -
+    navigate(`/receptionist/${businessName}`);
+  };
+
+  const renderMessageText = (text) => {
+    if (!text) return null;
+    
+    // 1. Define keywords
+    const keywords = [
+      'receptionist', 'digital receptionist', 'booking page', 'book a call',
+      platformName.toLowerCase(), business_slug?.toLowerCase()
+    ].filter(Boolean);
+
+    // 2. URL detection regex that excludes trailing parentheses/punctuation
+    const urlPattern = /(https?:\/\/[^\s\)]+)/gi;
+    
+    let parts = [text];
+    
+    // Linkify actual URLs first
+    parts = parts.flatMap((part, partIdx) => {
+      if (typeof part !== 'string') return [part];
+      const split = part.split(urlPattern);
+      return split.map((subPart, i) => {
+        if (subPart.match(urlPattern)) {
+          return (
+            <span 
+              key={`url-${partIdx}-${i}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(subPart, '_blank', 'noopener,noreferrer');
+              }}
+              style={{
+                color: '#2563eb',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontWeight: '600',
+                wordBreak: 'break-all'
+              }}
+            >
+              {subPart}
+            </span>
+          );
+        }
+        return subPart;
+      });
+    });
+
+    // Linkify keywords next
+    keywords.forEach((keyword, kwIdx) => {
+      let nextParts = [];
+      parts.forEach((part, partIdx) => {
+        if (typeof part !== 'string') {
+          nextParts.push(part);
+          return;
+        }
+        
+        const regex = new RegExp(`(${keyword})`, 'gi');
+        const split = part.split(regex);
+        
+        split.forEach((subPart, i) => {
+          if (subPart.toLowerCase() === keyword.toLowerCase()) {
+            nextParts.push(
+              <span 
+                key={`kw-${kwIdx}-${partIdx}-${i}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBusinessLink();
+                }}
+                style={{
+                  color: '#2563eb',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                {subPart}
+              </span>
+            );
+          } else if (subPart) {
+            nextParts.push(subPart);
+          }
+        });
+      });
+      parts = nextParts;
+    });
+    
+    return parts;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,12 +180,25 @@ const ChatBot = ({ isWidget = true, onClose }) => {
         throw new Error('API returned HTML instead of JSON - routing configuration issue');
       }
 
+      const responseText = response.data?.response || response.data?.message || response.data?.answer || response.data?.text || JSON.stringify(response.data);
+      
       const aiResponse = {
         id: Date.now() + 1,
-        text: response.data?.response || response.data?.message || response.data?.answer || response.data?.text || JSON.stringify(response.data),
+        text: responseText,
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
+
+      // Check for business mentions or booking intent
+      const businessKeywords = ['book', 'receptionist', 'call', 'appointment', 'reserve', 'schedule', 'contact', platformName.toLowerCase(), business_slug?.toLowerCase()].filter(Boolean);
+      const mentionsBusiness = businessKeywords.some(keyword => 
+        message.toLowerCase().includes(keyword) || responseText.toLowerCase().includes(keyword)
+      );
+
+      if (mentionsBusiness) {
+        aiResponse.showAction = true;
+      }
+
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('Chatbot API error:', error);
@@ -113,7 +240,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
         {messages.map((msg) => (
           <div key={msg.id} className={`widget-message-wrapper ${msg.sender}`}>
             <div className={`widget-message ${msg.sender}`}>
-              {msg.text}
+              {renderMessageText(msg.text)}
             </div>
             <div className="widget-message-time">{msg.time}</div>
           </div>
@@ -122,6 +249,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       </div>
 
       <form className="widget-chat-input-area" onSubmit={handleSend}>
+        
         <input
           type="text"
           className="widget-chat-input"
