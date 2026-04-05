@@ -107,7 +107,7 @@ const Sidebar = () => {
         </button>
         <button className={`menu-item ${activeMenu === 'Chatbot' ? 'active' : ''}`} onClick={() => handleMenuClick('Chatbot')}>
           <MessageSquare className="menu-icon" />
-          <span>Chatbot</span>
+          <span>Chatbot Configuration</span>
         </button>
       </nav>
 

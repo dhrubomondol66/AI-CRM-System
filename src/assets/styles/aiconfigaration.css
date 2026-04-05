@@ -104,9 +104,48 @@ body {
     background-color: #1d4ed8;
 }
 
+.ai-config-fetch-btn {
+    padding: 0.625rem 1.25rem;
+    background-color: #64748b;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.ai-config-fetch-btn:hover {
+    background-color: #475569;
+}
+
 /* ===================================
    SECTIONS
    =================================== */
+
+.ai-config-content {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.ai-config-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.ai-config-businesses-section {
+    position: sticky;
+    top: 2rem;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+}
 
 .ai-config-section {
     background-color: white;
@@ -730,6 +769,18 @@ body {
    FEEDBACK / BANNERS
    =================================== */
 
+.field-err.no-businesses {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: #f9fafb;
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
 .field-error-box {
     display: flex;
     align-items: center;
@@ -934,6 +985,71 @@ body {
 }
 
 .card-btn:hover { background: #1d4ed8; }
+
+/* ===================================
+   BUSINESS ACTIONS BUTTONS
+   =================================== */
+
+.business-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.business-edit-btn {
+    padding: 0.5rem 1rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.business-edit-btn:hover {
+    background: #1d4ed8;
+}
+
+.business-update-btn {
+    padding: 0.5rem 1rem;
+    background: #059669;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.business-update-btn:hover {
+    background: #047857;
+}
+
+.business-delete-btn {
+    padding: 0.5rem 1rem;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.business-delete-btn:hover {
+    background: #b91c1c;
+}
 
 /* ===================================
    ACCESSIBILITY

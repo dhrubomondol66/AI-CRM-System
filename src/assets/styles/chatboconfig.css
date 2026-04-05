@@ -1,0 +1,598 @@
+/* ============================================================
+   chatbotconfig.css
+   Two-column layout: left = forms + preview | right = businesses
+   ============================================================ */
+
+/* ── Google Font ──────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Design Tokens ────────────────────────────────────────── */
+:root {
+  --cbc-font:          'DM Sans', sans-serif;
+  --cbc-mono:          'DM Mono', monospace;
+
+  --cbc-bg:            #f4f6fb;
+  --cbc-surface:       #ffffff;
+  --cbc-border:        #e4e8f0;
+  --cbc-border-hover:  #c7d0e0;
+
+  --cbc-text-primary:  #0f172a;
+  --cbc-text-secondary:#475569;
+  --cbc-text-muted:    #94a3b8;
+
+  --cbc-accent-blue:   #2563eb;
+  --cbc-accent-blue-bg:#eff6ff;
+  --cbc-accent-red:    #dc2626;
+  --cbc-accent-red-bg: #fef2f2;
+  --cbc-accent-slate:  #475569;
+  --cbc-accent-slate-bg:#f1f5f9;
+
+  --cbc-success:       #16a34a;
+  --cbc-success-bg:    #f0fdf4;
+  --cbc-success-border:#bbf7d0;
+  --cbc-error:         #dc2626;
+  --cbc-error-bg:      #fef2f2;
+  --cbc-error-border:  #fecaca;
+
+  --cbc-radius-sm:     8px;
+  --cbc-radius-md:     12px;
+  --cbc-radius-lg:     16px;
+  --cbc-radius-xl:     20px;
+
+  --cbc-shadow-sm:     0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
+  --cbc-shadow-md:     0 4px 12px rgba(15,23,42,.08), 0 1px 3px rgba(15,23,42,.05);
+  --cbc-shadow-lg:     0 10px 28px rgba(15,23,42,.10), 0 2px 6px rgba(15,23,42,.06);
+}
+
+/* ── Base Reset ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Root Wrapper ─────────────────────────────────────────── */
+.cbc-root {
+  display: flex;
+  min-height: 100vh;
+  background: var(--cbc-bg);
+  font-family: var(--cbc-font);
+  color: var(--cbc-text-primary);
+}
+
+/* ── Main content area (beside sidebar) ───────────────────── */
+.cbc-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: 270px; /* Account for sidebar width */
+  padding: 28px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.cbc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1.5px solid var(--cbc-border);
+}
+
+.cbc-header__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--cbc-text-primary);
+}
+
+.cbc-header__subtitle {
+  font-size: 0.875rem;
+  color: var(--cbc-text-secondary);
+  margin-top: 4px;
+}
+
+.cbc-header__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.cbc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  font-family: var(--cbc-font);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--cbc-radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+}
+.cbc-btn:active { transform: scale(0.97); }
+
+.cbc-btn--fetch {
+  background: var(--cbc-surface);
+  color: var(--cbc-text-secondary);
+  border: 1.5px solid var(--cbc-border);
+  box-shadow: var(--cbc-shadow-sm);
+}
+.cbc-btn--fetch:hover {
+  background: var(--cbc-accent-slate-bg);
+  border-color: var(--cbc-border-hover);
+}
+
+.cbc-btn--save {
+  background: var(--cbc-text-primary);
+  color: #fff;
+  box-shadow: var(--cbc-shadow-sm);
+}
+.cbc-btn--save:hover:not(:disabled) {
+  background: #1e293b;
+  box-shadow: var(--cbc-shadow-md);
+}
+.cbc-btn--save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* spinning loader icon */
+.cbc-spin {
+  animation: cbc-rotate 0.8s linear infinite;
+}
+@keyframes cbc-rotate { to { transform: rotate(360deg); } }
+
+/* ── Status Banners ───────────────────────────────────────── */
+.cbc-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  border-radius: var(--cbc-radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1.5px solid transparent;
+  animation: cbc-slide-in 0.25s ease;
+}
+@keyframes cbc-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cbc-banner--success {
+  background: var(--cbc-success-bg);
+  border-color: var(--cbc-success-border);
+  color: var(--cbc-success);
+}
+.cbc-banner--error {
+  background: var(--cbc-error-bg);
+  border-color: var(--cbc-error-border);
+  color: var(--cbc-error);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TWO-COLUMN BODY
+   Left  → forms + preview  (takes ~60% width)
+   Right → configured businesses  (sticky, ~38% width)
+   ───────────────────────────────────────────────────────────── */
+.cbc-body {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ── Left column ──────────────────────────────────────────── */
+.cbc-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Right column ─────────────────────────────────────────── */
+.cbc-right {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Card (shared section block) ──────────────────────────── */
+.cbc-card {
+  background: var(--cbc-surface);
+  border: 1.5px solid var(--cbc-border);
+  border-radius: var(--cbc-radius-lg);
+  padding: 24px 26px;
+  box-shadow: var(--cbc-shadow-sm);
+  transition: box-shadow 0.2s;
+}
+.cbc-card:hover {
+  box-shadow: var(--cbc-shadow-md);
+}
+.cbc-card--full-height {
+  height: 100%;
+}
+
+.cbc-card__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.cbc-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.cbc-card__icon--blue  { background: var(--cbc-accent-blue-bg);  color: var(--cbc-accent-blue);  }
+.cbc-card__icon--red   { background: var(--cbc-accent-red-bg);   color: var(--cbc-accent-red);   }
+.cbc-card__icon--slate { background: var(--cbc-accent-slate-bg); color: var(--cbc-accent-slate); }
+
+.cbc-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cbc-text-primary);
+  letter-spacing: -0.2px;
+}
+
+/* ── Form Fields ──────────────────────────────────────────── */
+.cbc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 18px;
+}
+.cbc-field:first-of-type { margin-top: 0; }
+
+.cbc-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cbc-text-secondary);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.cbc-input,
+.cbc-select,
+.cbc-textarea {
+  width: 100%;
+  padding: 11px 14px;
+  font-family: var(--cbc-font);
+  font-size: 0.9rem;
+  color: var(--cbc-text-primary);
+  background: var(--cbc-bg);
+  border: 1.5px solid var(--cbc-border);
+  border-radius: var(--cbc-radius-sm);
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  appearance: none;
+}
+.cbc-input:focus,
+.cbc-select:focus,
+.cbc-textarea:focus {
+  border-color: var(--cbc-accent-blue);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+  background: #fff;
+}
+
+.cbc-textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* icon-inside input wrapper */
+.cbc-input-icon-wrap {
+  position: relative;
+}
+.cbc-input-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--cbc-text-muted);
+  pointer-events: none;
+}
+.cbc-input--icon {
+  padding-left: 38px;
+}
+
+/* ── Vector Knowledge Box ─────────────────────────────────── */
+.cbc-vector-box {
+  margin-top: 22px;
+  padding: 20px;
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border: 1.5px solid var(--cbc-border);
+  border-radius: var(--cbc-radius-md);
+}
+.cbc-vector-box__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.cbc-vector-box__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--cbc-text-primary);
+}
+.cbc-vector-box__desc {
+  font-size: 0.78rem;
+  color: var(--cbc-text-secondary);
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+.cbc-vector-box__code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #0f172a;
+  padding: 11px 16px;
+  border-radius: var(--cbc-radius-sm);
+  font-family: var(--cbc-mono);
+  font-size: 0.82rem;
+  color: #38bdf8;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.cbc-vector-box__badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: rgba(56,189,248,.15);
+  color: #0ea5e9;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ── Widget Live Preview ───────────────────────────────────── */
+.cbc-preview-stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 20px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: var(--cbc-radius-md);
+}
+.cbc-preview-widget {
+  width: 300px;
+  background: #fff;
+  border-radius: var(--cbc-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--cbc-shadow-lg);
+}
+.cbc-preview-widget__topbar {
+  background: #0f172a;
+  padding: 13px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cbc-preview-widget__avatar {
+  width: 32px;
+  height: 32px;
+  background: #1e293b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.cbc-preview-widget__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+.cbc-preview-widget__status {
+  font-size: 0.68rem;
+  color: #10b981;
+}
+.cbc-preview-widget__body {
+  padding: 16px;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cbc-preview-bubble {
+  max-width: 85%;
+  padding: 9px 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  border-radius: 12px;
+}
+.cbc-preview-bubble--left {
+  background: #f1f5f9;
+  border-bottom-left-radius: 2px;
+  align-self: flex-start;
+}
+.cbc-preview-bubble--right {
+  background: #0f172a;
+  color: #fff;
+  border-bottom-right-radius: 2px;
+  align-self: flex-end;
+}
+.cbc-preview-widget__footer {
+  padding: 12px 14px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.cbc-preview-widget__input-mock {
+  flex: 1;
+  height: 34px;
+  background: var(--cbc-bg);
+  border: 1.5px solid var(--cbc-border);
+  border-radius: 17px;
+}
+.cbc-preview-widget__send-mock {
+  width: 34px;
+  height: 34px;
+  background: #0f172a;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Businesses (right column) ────────────────────────────── */
+.cbc-empty-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 20px;
+  background: var(--cbc-bg);
+  border: 1.5px dashed var(--cbc-border);
+  border-radius: var(--cbc-radius-md);
+  font-size: 0.85rem;
+  color: var(--cbc-text-secondary);
+  line-height: 1.55;
+}
+
+.cbc-biz-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: calc(100vh - 260px);
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cbc-border) transparent;
+}
+.cbc-biz-list::-webkit-scrollbar { width: 5px; }
+.cbc-biz-list::-webkit-scrollbar-track { background: transparent; }
+.cbc-biz-list::-webkit-scrollbar-thumb { background: var(--cbc-border); border-radius: 4px; }
+
+/* individual business card */
+.cbc-biz-card {
+  background: var(--cbc-bg);
+  border: 1.5px solid var(--cbc-border);
+  border-radius: var(--cbc-radius-md);
+  padding: 16px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.cbc-biz-card:hover {
+  border-color: var(--cbc-border-hover);
+  box-shadow: var(--cbc-shadow-sm);
+}
+
+.cbc-biz-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cbc-biz-card__name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cbc-text-primary);
+  line-height: 1.3;
+}
+.cbc-biz-card__domain-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  background: var(--cbc-accent-blue-bg);
+  color: var(--cbc-accent-blue);
+  padding: 3px 9px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.cbc-biz-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.cbc-biz-card__detail-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--cbc-text-secondary);
+  line-height: 1.45;
+}
+.cbc-biz-card__detail-row svg { flex-shrink: 0; margin-top: 2px; }
+
+.cbc-biz-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* business action buttons */
+.cbc-biz-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-family: var(--cbc-font);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: var(--cbc-radius-sm);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+}
+.cbc-biz-btn:active { transform: scale(0.96); }
+
+.cbc-biz-btn--edit {
+  background: var(--cbc-accent-slate-bg);
+  color: var(--cbc-accent-slate);
+  border-color: #cbd5e1;
+}
+.cbc-biz-btn--edit:hover {
+  background: #e2e8f0;
+}
+
+.cbc-biz-btn--update {
+  background: #eff6ff;
+  color: var(--cbc-accent-blue);
+  border-color: #bfdbfe;
+}
+.cbc-biz-btn--update:hover {
+  background: #dbeafe;
+}
+
+.cbc-biz-btn--delete {
+  background: var(--cbc-error-bg);
+  color: var(--cbc-error);
+  border-color: #fecaca;
+}
+.cbc-biz-btn--delete:hover {
+  background: #fee2e2;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .cbc-body {
+    grid-template-columns: 1fr;
+  }
+  .cbc-right {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .cbc-main {
+    padding: 16px 16px 40px;
+  }
+  .cbc-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

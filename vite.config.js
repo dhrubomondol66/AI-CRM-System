@@ -10,7 +10,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api/v1': {
-        target: 'https://reservation-xynh.onrender.com',
+        target: 'https://ai-reservation.onrender.com',
         changeOrigin: true,
         secure: false,
         configure: (proxy, options) => {

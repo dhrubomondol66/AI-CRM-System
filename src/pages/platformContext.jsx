@@ -3,7 +3,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || '/',
+  baseURL: import.meta.env.PROD ? 'https://ai-reservation.onrender.com' : '',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
@@ -26,12 +26,21 @@ export const PlatformProvider = ({ children }) => {
     const fetchPlatformName = async () => {
       try {
         const res = await api.get('/api/v1/public/platform-name');
+        
+        // Check if response is HTML (indicating routing/proxy issue)
+        if (typeof res.data === 'string' && res.data.includes('<!doctype html>')) {
+          console.warn('Platform API: Received HTML response instead of JSON');
+          return;
+        }
+        
+        console.log('Platform API Response:', res.data);
         const name =
           res.data?.platform_name ??
           res.data?.name ??
           res.data?.data?.platform_name;
         if (name) setPlatformName(name);
-      } catch {
+      } catch (error) {
+        console.error('Error fetching platform name:', error);
         // Silently fall back to default if fetch fails
       }
     };

@@ -45,8 +45,6 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     },
   ]);
   const messagesEndRef = useRef(null);
-  const [isVoiceActive, setIsVoiceActive] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState('.');
 
