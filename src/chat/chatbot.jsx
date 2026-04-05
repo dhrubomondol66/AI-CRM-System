@@ -45,6 +45,10 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     },
   ]);
   const messagesEndRef = useRef(null);
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingDots, setTypingDots] = useState('.');
 
   const handleBusinessLink = () => {
     // Navigate to /receptionist/{businessName}
@@ -148,6 +152,21 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (isTyping) {
+      const interval = setInterval(() => {
+        setTypingDots(prev => {
+          if (prev === '.') return '..';
+          if (prev === '..') return '...';
+          return '.';
+        });
+      }, 500);
+      return () => clearInterval(interval);
+    } else {
+      setTypingDots('.');
+    }
+  }, [isTyping]);
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
@@ -161,6 +180,9 @@ const ChatBot = ({ isWidget = true, onClose }) => {
 
     setMessages([...messages, newMessage]);
     setMessage('');
+    
+    // Show typing indicator
+    setIsTyping(true);
 
     try {
       // Debug log to confirm API URL
@@ -188,17 +210,9 @@ const ChatBot = ({ isWidget = true, onClose }) => {
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-
-      // Check for business mentions or booking intent
-      const businessKeywords = ['book', 'receptionist', 'call', 'appointment', 'reserve', 'schedule', 'contact', platformName.toLowerCase(), business_slug?.toLowerCase()].filter(Boolean);
-      const mentionsBusiness = businessKeywords.some(keyword => 
-        message.toLowerCase().includes(keyword) || responseText.toLowerCase().includes(keyword)
-      );
-
-      if (mentionsBusiness) {
-        aiResponse.showAction = true;
-      }
-
+      
+      // Hide typing indicator and show AI response
+      setIsTyping(false);
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('Chatbot API error:', error);
@@ -245,6 +259,14 @@ const ChatBot = ({ isWidget = true, onClose }) => {
             <div className="widget-message-time">{msg.time}</div>
           </div>
         ))}
+        
+        {/* Typing Indicator */}
+        {isTyping && (
+          <div className="widget-message-wrapper ai">
+            <div className="widget-message-time">AI is typing{typingDots}</div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 
