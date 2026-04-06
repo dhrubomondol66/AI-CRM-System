@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Globe, Info, Database, Loader, CheckCircle, AlertCircle, Tag, Cpu, RefreshCw, Trash2, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Save, Globe, Info, Database, Loader, CheckCircle, AlertCircle, Tag, Cpu, RefreshCw, Trash2, X } from 'lucide-react';
 import Sidebar from '../components/Sidebar.jsx';
 import '../assets/styles/chatboconfig.css';
 import axios from 'axios';
@@ -43,7 +43,6 @@ const ChatbotConfig = () => {
     name: 'Business Name',
     website_url: 'https://www.domain.com/en',
     description: 'Business description',
-    domain: 'General Business', // Will be auto-generated from description
     vector_data: { embeddings_data: {} }
   });
 
@@ -51,90 +50,12 @@ const ChatbotConfig = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
-  const [editingBusinessId, setEditingBusinessId] = useState(null); // Track which business is being edited
 
-  // Ensure domain is always generated from description
-  useEffect(() => {
-    setConfig(prev => ({
-      ...prev,
-      domain: generateDomainFromDescription(prev.description)
-    }));
-  }, []); // Only run once on mount
 
-  // const domains = [
-  //   'Health & Wellness', 'Real Estate', 'Legal Services', 'E-commerce',
-  //   'Customer Support', 'Education', 'Hospitality', 'Sports & Entertainment'
-  // ];
-
-  // Function to automatically generate domain from description
-  const generateDomainFromDescription = (description) => {
-    if (!description || description === 'Business description') {
-      return 'General Business';
-    }
-    
-    const desc = description.toLowerCase();
-    
-    // Domain mapping based on keywords in description
-    if (desc.includes('health') || desc.includes('medical') || desc.includes('wellness') || desc.includes('fitness') || desc.includes('spa')) {
-      return 'Health & Wellness';
-    } else if (desc.includes('real estate') || desc.includes('property') || desc.includes('housing') || desc.includes('rental')) {
-      return 'Real Estate';
-    } else if (desc.includes('legal') || desc.includes('law') || desc.includes('attorney') || desc.includes('lawyer')) {
-      return 'Legal Services';
-    } else if (desc.includes('ecommerce') || desc.includes('shop') || desc.includes('store') || desc.includes('retail')) {
-      return 'E-commerce';
-    } else if (desc.includes('customer') || desc.includes('support') || desc.includes('service') || desc.includes('help')) {
-      return 'Customer Support';
-    } else if (desc.includes('education') || desc.includes('school') || desc.includes('training') || desc.includes('course')) {
-      return 'Education';
-    } else if (desc.includes('hospitality') || desc.includes('hotel') || desc.includes('restaurant') || desc.includes('food')) {
-      return 'Hospitality';
-    } else if (desc.includes('sports') || desc.includes('entertainment') || desc.includes('gaming') || desc.includes('events')) {
-      return 'Sports & Entertainment';
-    } else if (desc.includes('technology') || desc.includes('software') || desc.includes('it') || desc.includes('tech')) {
-      return 'Technology';
-    } else if (desc.includes('finance') || desc.includes('banking') || desc.includes('investment') || desc.includes('money')) {
-      return 'Finance';
-    } else {
-      return 'General Business';
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setConfig(prev => {
-      const newConfig = { ...prev, [name]: value };
-      
-      // Auto-generate domain when description changes
-      if (name === 'description') {
-        newConfig.domain = generateDomainFromDescription(value);
-      }
-      
-      return newConfig;
-    });
-  };
-
-  // Edit mode handlers
-  const handleEdit = (business) => {
-    // Load business data into form but regenerate domain from description
-    const editedBusiness = {
-      ...business,
-      domain: generateDomainFromDescription(business.description)
-    };
-    setConfig(editedBusiness);
-    setEditingBusinessId(business.id);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingBusinessId(null);
-    // Reset form to default values
-    setConfig({
-      name: 'Business Name',
-      website_url: 'https://www.domain.com/en',
-      description: 'Business description',
-      domain: 'General Business', // Will be auto-generated from description
-      vector_data: { embeddings_data: {} }
-    });
+    setConfig(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async (e) => {
@@ -154,7 +75,6 @@ const ChatbotConfig = () => {
           business_name: config.name,
           website: config.website_url,
           business_description: config.description,
-          business_domain: config.domain,
           ...config
         },
         // Backend-style structure
@@ -162,7 +82,6 @@ const ChatbotConfig = () => {
           name: config.name,
           website_url: config.website_url,
           description: config.description,
-          domain: config.domain,
           vector_data: config.vector_data,
           is_active: true,
           created_at: new Date().toISOString()
@@ -172,7 +91,6 @@ const ChatbotConfig = () => {
           name: config.name,
           website_url: config.website_url,
           description: config.description,
-          domain: config.domain,
           metadata: {
             vector_data: config.vector_data,
             is_active: true
@@ -182,15 +100,13 @@ const ChatbotConfig = () => {
         {
           name: config.name,
           website_url: config.website_url,
-          description: config.description,
-          domain: config.domain
+          description: config.description
         },
         // Snake case fields
         {
           business_name: config.name,
           website_url: config.website_url,
           business_description: config.description,
-          business_domain: config.domain,
           vector_data: config.vector_data
         }
       ];
@@ -270,94 +186,30 @@ const ChatbotConfig = () => {
     try {
       console.log('Updating business:', businessId, 'with data:', updatedConfig);
       
-      // Prepare data variations for backend compatibility
-      const dataVariations = [
-        // Variation 1: Direct config with all fields
-        {
-          name: updatedConfig.name || config.name,
-          website_url: updatedConfig.website_url || config.website_url,
-          description: updatedConfig.description || config.description,
-          vector_data: updatedConfig.vector_data || config.vector_data
-        },
-        // Variation 2: Minimal required fields
-        {
-          name: updatedConfig.name || config.name,
-          website_url: updatedConfig.website_url || config.website_url,
-          description: updatedConfig.description || config.description
-        },
-        // Variation 3: Only changed fields
-        Object.fromEntries(
-          Object.entries(updatedConfig).filter(([key, value]) => 
-            value !== undefined && value !== null && value !== ''
-          )
-        ),
-        // Variation 4: Backend field names
-        {
-          business_name: updatedConfig.name || config.name,
-          website: updatedConfig.website_url || config.website_url,
-          business_description: updatedConfig.description || config.description,
-          embeddings: updatedConfig.vector_data || config.vector_data
-        }
-      ];
-      
-      // Try different endpoint formats and data variations
+      // Try different endpoint formats
       let response;
-      let endpointTried = '';
-      
-      for (let i = 0; i < dataVariations.length; i++) {
+      try {
+        response = await chatbotApi.patch(`/api/v1/businesses/${businessId}`, updatedConfig);
+      } catch (patchErr) {
+        console.log('PATCH endpoint failed, trying PUT:', patchErr.response?.status);
         try {
-          console.log(`Trying data variation ${i + 1}:`, dataVariations[i]);
-          
-          // Try PATCH without trailing slash
-          try {
-            response = await chatbotApi.patch(`/api/v1/businesses/${businessId}`, dataVariations[i]);
-            endpointTried = `/api/v1/businesses/${businessId} (variation ${i + 1})`;
-            break;
-          } catch (patchErr) {
-            console.log(`PATCH without slash failed for variation ${i + 1}:`, patchErr.response?.status);
-            
-            // Try PATCH with trailing slash
-            try {
-              response = await chatbotApi.patch(`/api/v1/businesses/${businessId}/`, dataVariations[i]);
-              endpointTried = `/api/v1/businesses/${businessId}/ (variation ${i + 1})`;
-              break;
-            } catch (patchSlashErr) {
-              console.log(`PATCH with slash failed for variation ${i + 1}:`, patchSlashErr.response?.status);
-              
-              // Try PUT
-              try {
-                response = await chatbotApi.put(`/api/v1/businesses/${businessId}`, dataVariations[i]);
-                endpointTried = `/api/v1/businesses/${businessId} PUT (variation ${i + 1})`;
-                break;
-              } catch (putErr) {
-                console.log(`PUT failed for variation ${i + 1}:`, putErr.response?.status);
-                
-                if (i === dataVariations.length - 1) {
-                  throw putErr; // Last variation, throw the error
-                }
-              }
-            }
-          }
-        } catch (err) {
-          if (i === dataVariations.length - 1) {
-            throw err; // Last variation, throw the error
-          }
+          response = await chatbotApi.put(`/api/v1/businesses/${businessId}`, updatedConfig);
+        } catch (putErr) {
+          console.log('PUT endpoint failed, trying with trailing slash:', putErr.response?.status);
+          response = await chatbotApi.patch(`/api/v1/businesses/${businessId}/`, updatedConfig);
         }
       }
       
-      console.log('Business updated successfully via:', endpointTried, response.data);
+      console.log('Business updated successfully:', response.data);
       setSaveSuccess(true);
+      setConfig({
+        name: 'Business Name',
+        website_url: 'https://www.domain.com/en',
+        description: 'Business description',
+        vector_data: { embeddings_data: {} }
+      });
       setTimeout(() => setSaveSuccess(false), 4000);
-      setEditingBusinessId(null); // Exit edit mode after successful update
-      
-      // Update local state immediately to show new domain
-      setBusinesses(prev => prev.map(business => 
-        business.id === businessId 
-          ? { ...business, domain: config.domain } // Use the current config domain (which is auto-generated)
-          : business
-      ));
-      
-      handleFetch(); // Refresh the list from backend
+      handleFetch();
     } catch (err) {
       console.error('Update error details:', {
         status: err.response?.status,
@@ -459,24 +311,6 @@ const ChatbotConfig = () => {
                   />
                 </div>
               </div>
-
-              {/* <div className="cbc-field">
-                <label className="cbc-label">Service Domain *</label>
-                <div className="cbc-input-icon-wrap">
-                  <Tag size={15} className="cbc-input-icon" />
-                  <input
-                    type="text"
-                    className="cbc-input cbc-input--icon"
-                    value={config.domain}
-                    readOnly
-                    style={{ backgroundColor: '#f5f5f5', cursor: 'default' }}
-                    title="Domain is automatically generated from description"
-                  />
-                </div>
-                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                  Domain is automatically generated from business description
-                </small>
-              </div> */}
             </section>
 
             {/* Bot Context */}
@@ -523,7 +357,7 @@ const ChatbotConfig = () => {
                   </div>
                   <div className="cbc-preview-widget__body">
                     <div className="cbc-preview-bubble cbc-preview-bubble--left">
-                      Hello! Welcome to our {config.domain} portal. How can I help you?
+                      Hello! Welcome to our portal. How can I help you?
                     </div>
                     <div className="cbc-preview-bubble cbc-preview-bubble--right">
                       I'm interested in {config.name}.
@@ -558,7 +392,6 @@ const ChatbotConfig = () => {
                     <div key={index} className="cbc-biz-card">
                       <div className="cbc-biz-card__header">
                         <h3 className="cbc-biz-card__name">{business.name || 'Unnamed Business'}</h3>
-                        {/* <span className="cbc-biz-card__domain-badge">{business.domain || 'No Domain'}</span> */}
                       </div>
                       <div className="cbc-biz-card__details">
                         <div className="cbc-biz-card__detail-row">
@@ -575,18 +408,23 @@ const ChatbotConfig = () => {
                         </div>
                       </div>
                       <div className="cbc-biz-card__actions">
-                        {editingBusinessId === business.id ? (
+                        {config.id === business.id ? (
                           <>
                             <button className="cbc-biz-btn cbc-biz-btn--update" onClick={() => handleUpdate(business.id, config)}>
                               <Save size={13} /> Update
                             </button>
-                            <button className="cbc-biz-btn cbc-biz-btn--cancel" onClick={handleCancelEdit}>
-                              <XCircle size={13} /> Cancel
+                            <button className="cbc-biz-btn cbc-biz-btn--delete" style={{ backgroundColor: 'transparent' }} onClick={() => setConfig({
+                              name: 'Business Name',
+                              website_url: 'https://www.domain.com/en',
+                              description: 'Business description',
+                              vector_data: { embeddings_data: {} }
+                            })}>
+                              <X size={13} /> Cancel
                             </button>
                           </>
                         ) : (
                           <>
-                            <button className="cbc-biz-btn cbc-biz-btn--edit" onClick={() => handleEdit(business)}>
+                            <button className="cbc-biz-btn cbc-biz-btn--edit" onClick={() => setConfig(business)}>
                               <Cpu size={13} /> Edit
                             </button>
                             <button className="cbc-biz-btn cbc-biz-btn--delete" onClick={() => handleDelete(business.id)}>
