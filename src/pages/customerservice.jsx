@@ -9,7 +9,7 @@ import Cookies from 'js-cookie';
 
 // ── Axios instance ─────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || '/',
+  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
