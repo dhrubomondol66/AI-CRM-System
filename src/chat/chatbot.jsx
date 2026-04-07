@@ -16,10 +16,30 @@ const chatbotapi = axios.create({
   baseURL: import.meta.env.PROD
     ? "https://ai-reservation.onrender.com"   // ONLY domain
     : "",
+  withCredentials: true, // Ensuring session cookies are sent
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+// Helper functions for session persistence
+const getSessionId = () => {
+  let sid = sessionStorage.getItem('chat_session_id');
+  if (!sid) {
+    sid = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    sessionStorage.setItem('chat_session_id', sid);
+  }
+  return sid;
+};
+
+const getUserId = () => {
+  let uid = localStorage.getItem('chat_user_id');
+  if (!uid) {
+    uid = `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    localStorage.setItem('chat_user_id', uid);
+  }
+  return uid;
+};
 
 
 const ChatBot = ({ isWidget = true, onClose }) => {
@@ -47,6 +67,42 @@ const ChatBot = ({ isWidget = true, onClose }) => {
   const messagesEndRef = useRef(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState('.');
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  // Persistent IDs
+  const sessionId = useRef(getSessionId()).current;
+  const userId = useRef(getUserId()).current;
+
+  // Fetch Chat History on mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const response = await chatbotapi.get(`/api/global-chat/history/`, {
+          params: { session_id: sessionId }
+        });
+        
+        if (response.data && Array.isArray(response.data.history)) {
+          const historyMessages = response.data.history.map((msg, index) => ({
+            id: index,
+            text: msg.message || msg.text,
+            sender: msg.role === 'user' ? 'user' : 'ai',
+            time: msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+          }));
+          
+          if (historyMessages.length > 0) {
+            setMessages(historyMessages);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch chat history:', error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    fetchHistory();
+  }, [sessionId]);
 
   const handleBusinessLink = () => {
     // Navigate to /receptionist/{businessName}
@@ -186,11 +242,11 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       // Debug log to confirm API URL
       console.log("API URL:", chatbotapi.defaults.baseURL);
       
-      // Call the chatbot API with full endpoint path
+      // Call the chatbot API with persistent session IDs
       const response = await chatbotapi.post('/api/global-chat/', {
         message: message,
-        user_id: 'user_' + Date.now(),
-        session_id: 'session_' + Date.now()
+        user_id: userId,
+        session_id: sessionId
       });
 
       console.log('Chatbot API response:', response.data);
@@ -249,6 +305,11 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       </div>
 
       <div className="widget-chat-messages">
+        {isLoadingHistory && (
+          <div className="widget-message-wrapper ai">
+            {/* <div className="widget-message ai">Loading your conversation history...</div> */}
+          </div>
+        )}
         {messages.map((msg) => (
           <div key={msg.id} className={`widget-message-wrapper ${msg.sender}`}>
             <div className={`widget-message ${msg.sender}`}>

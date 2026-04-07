@@ -154,7 +154,7 @@ const AddBusinessPage = () => {
         setBusinessCards(list);
 
         const extras = list
-          .map((b) => b.service_type_name)
+          .map((b) => b.service_name || b.service_type_name)
           .filter((t) => t && !STANDARD_TYPES.includes(t));
         setCustomServices([...new Set(extras)]);
 
@@ -198,7 +198,7 @@ const AddBusinessPage = () => {
       slug: business.slug ?? "",
       description: business.description ?? "",
       logo: business.logo ?? "",
-      service_type_name: business.service_type_name ?? "",
+      service_type_name: business.service_name || business.service_type_name || "",
       contact_fullname: business.contact_fullname ?? "",
       contact_email: business.contact_email ?? "",
       contact_phone: business.contact_phone ?? "",
@@ -492,7 +492,7 @@ const AddBusinessPage = () => {
                         )}
                         <h4 className="business-card-title" style={{ margin: 0 }}>{b.business_name}</h4>
                       </div>
-                      {/* <span className="business-card-sub">{b.service_type_name}</span> */}
+                      <span className="business-card-sub">{b.service_name || b.service_type_name}</span>
                     </div>
                     <div className="card-actions">
                       {editingCardId === b.id ? (
