@@ -12,13 +12,57 @@ import axios from 'axios';
  * A premium chat interface that can be used as a standalone component or within the widget.
  */
 
+// Helper to get CSRF token
+const getCookie = (name) => {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+        }
+    }
+  }
+  return cookieValue;
+};
+
+// Helper for consistent session persistence
+const getSessionId = () => {
+  let sid = sessionStorage.getItem('chat_session_id');
+  if (!sid) {
+    sid = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    sessionStorage.setItem('chat_session_id', sid);
+  }
+  return sid;
+};
+
+const getUserId = () => {
+  let uid = localStorage.getItem('chat_user_id');
+  if (!uid) {
+    uid = `user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    localStorage.setItem('chat_user_id', uid);
+  }
+  return uid;
+};
+
 const chatbotapi = axios.create({
   baseURL: import.meta.env.PROD
     ? "https://ai-reservation.onrender.com"   // ONLY domain
     : "",
+  withCredentials: true, // Required for Django session cookies (credentials: 'include')
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+chatbotapi.interceptors.request.use((config) => {
+  const csrftoken = getCookie('csrftoken');
+  if (csrftoken) {
+    config.headers['X-CSRFToken'] = csrftoken;
+  }
+  return config;
 });
 
 
@@ -47,6 +91,9 @@ const ChatBot = ({ isWidget = true, onClose }) => {
   const messagesEndRef = useRef(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState('.');
+
+  const sessionId = useRef(getSessionId()).current;
+  const userId = useRef(getUserId()).current;
 
   const handleBusinessLink = () => {
     // Navigate to /receptionist/{businessName}
@@ -186,11 +233,11 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       // Debug log to confirm API URL
       console.log("API URL:", chatbotapi.defaults.baseURL);
       
-      // Call the chatbot API with full endpoint path
+      // Call the chatbot API with persistent session IDs and proper credentials configuration
       const response = await chatbotapi.post('/api/global-chat/', {
         message: message,
-        user_id: 'user_' + Date.now(),
-        session_id: 'session_' + Date.now()
+        user_id: userId,
+        session_id: sessionId
       });
 
       console.log('Chatbot API response:', response.data);
