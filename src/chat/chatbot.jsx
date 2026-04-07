@@ -47,6 +47,20 @@ const getUserId = () => {
   return uid;
 };
 
+// ✅ Client-Side History Buffer
+const getChatBuffer = (businessId) => {
+    const buf = localStorage.getItem(`chat_buffer_${businessId}`);
+    return buf ? JSON.parse(buf) : [];
+};
+
+const updateChatBuffer = (businessId, role, content) => {
+    const buf = getChatBuffer(businessId);
+    buf.push({ role, content });
+    // Limit to last 20 messages to save tokens/storage
+    if (buf.length > 20) buf.shift(); 
+    localStorage.setItem(`chat_buffer_${businessId}`, JSON.stringify(buf));
+};
+
 const chatbotapi = axios.create({
   baseURL: import.meta.env.PROD
     ? "https://ai-reservation.onrender.com"   // ONLY domain
@@ -94,6 +108,9 @@ const ChatBot = ({ isWidget = true, onClose }) => {
 
   const sessionId = useRef(getSessionId()).current;
   const userId = useRef(getUserId()).current;
+
+  // Initial greeting or load from buffer if needed? 
+  // For now, satisfy the "user identifies" request by sending buffer in handleSend.
 
   const handleBusinessLink = () => {
     // Navigate to /receptionist/{businessName}
@@ -229,15 +246,18 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     // Show typing indicator
     setIsTyping(true);
 
+    const chatBuffer = getChatBuffer(businessNameSlug);
+
     try {
       // Debug log to confirm API URL
       console.log("API URL:", chatbotapi.defaults.baseURL);
       
-      // Call the chatbot API with persistent session IDs and proper credentials configuration
+      // Call the chatbot API with persistent session IDs and browser-side chat history
       const response = await chatbotapi.post('/api/global-chat/', {
         message: message,
         user_id: userId,
-        session_id: sessionId
+        session_id: sessionId,
+        chat_history: chatBuffer // ✅ Sending local history for AI context
       });
 
       console.log('Chatbot API response:', response.data);
@@ -259,6 +279,11 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       // Hide typing indicator and show AI response
       setIsTyping(false);
       setMessages(prev => [...prev, aiResponse]);
+
+      // ✅ Update browser's local memory for future context
+      updateChatBuffer(businessNameSlug, 'user', message);
+      updateChatBuffer(businessNameSlug, 'assistant', responseText);
+
     } catch (error) {
       console.error('Chatbot API error:', error);
       
