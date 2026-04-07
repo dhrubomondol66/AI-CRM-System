@@ -1,11 +1,11 @@
 
 :root {
-  --chat-primary: #6366f1;
-  --chat-primary-hover: #4f46e5;
+  --chat-primary: #2563eb;
+  --chat-primary-hover: #1d4ed8;
   --chat-bg: rgba(255, 255, 255, 0.85);
   --chat-text: #1f2937;
   --chat-text-light: #6b7280;
-  --chat-sent: #6366f1;
+  --chat-sent: #2563eb;
   --chat-received: #f3f4f6;
   --chat-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   --chat-border: rgba(229, 231, 235, 0.5);

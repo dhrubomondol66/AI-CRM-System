@@ -492,7 +492,7 @@ const AddBusinessPage = () => {
                         )}
                         <h4 className="business-card-title" style={{ margin: 0 }}>{b.business_name}</h4>
                       </div>
-                      <span className="business-card-sub">{b.service_type_name}</span>
+                      {/* <span className="business-card-sub">{b.service_type_name}</span> */}
                     </div>
                     <div className="card-actions">
                       {editingCardId === b.id ? (

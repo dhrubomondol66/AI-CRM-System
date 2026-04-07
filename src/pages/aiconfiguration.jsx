@@ -293,7 +293,7 @@ export default function AIConfiguration() {
       setPrompt('');
     }
     if (finalPrompts.length === 0) {
-      setSaveError('Please add at least one prompt instruction.');
+      setSaveError('Please add at least one line of instruction.');
       return;
     }
     setSaveLoading(true);
@@ -502,12 +502,12 @@ export default function AIConfiguration() {
 
               <div className="ai-config-prompt">
                 <div className="ai-config-prompt-content">
-                  <h2 className="ai-config-prompt-title">Prompt</h2>
+                  <h2 className="ai-config-prompt-title">Description</h2>
                   <div className="ai-config-prompt-input">
                     <textarea
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Enter a prompt instruction and click Add Prompt…"
+                      placeholder="Enter a Description and click Add Description…"
                       onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addPrompt(); }}
                     />
                   </div>
@@ -518,7 +518,7 @@ export default function AIConfiguration() {
                     onClick={addPrompt}
                     disabled={!prompt.trim()}
                   >
-                    Add Prompt
+                    Add Description
                   </button>
                 </div>
                 {savedPrompts.length > 0 && (
@@ -650,7 +650,7 @@ export default function AIConfiguration() {
               </div>
             </section>
 
-            <section className="ai-config-section">
+            {/* <section className="ai-config-section">
               <h2 className="ai-config-section-title">Select Voice</h2>
               <div className="voice-grid">
                 {VOICES.map((voice) => (
@@ -673,7 +673,7 @@ export default function AIConfiguration() {
                   </div>
                 ))}
               </div>
-            </section>
+            </section> */}
 
             <section className="ai-config-section">
               <h2 className="ai-config-section-title">Permissions</h2>
