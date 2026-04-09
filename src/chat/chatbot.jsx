@@ -124,86 +124,125 @@ const ChatBot = ({ isWidget = true, onClose }) => {
   const renderMessageText = (text) => {
     if (!text) return null;
     
-    // 1. Define keywords
-    const keywords = [
-      'receptionist', 'digital receptionist', 'booking page', 'book a call',
-      platformName.toLowerCase(), business_slug?.toLowerCase()
-    ].filter(Boolean);
-
-    // 2. URL detection regex that excludes trailing parentheses/punctuation
-    const urlPattern = /(https?:\/\/[^\s\)]+)/gi;
-    
-    let parts = [text];
-    
-    // Linkify actual URLs first
-    parts = parts.flatMap((part, partIdx) => {
-      if (typeof part !== 'string') return [part];
-      const split = part.split(urlPattern);
-      return split.map((subPart, i) => {
-        if (subPart.match(urlPattern)) {
-          return (
-            <span 
-              key={`url-${partIdx}-${i}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(subPart, '_blank', 'noopener,noreferrer');
-              }}
-              style={{
-                color: '#2563eb',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontWeight: '600',
-                wordBreak: 'break-all'
-              }}
-            >
-              {subPart}
-            </span>
-          );
+    // Check if this is a business list response and reformat it
+    if (text.includes('businesses available') && text.includes('**Services**') && text.includes('**Website**')) {
+      // Split into lines
+      const lines = text.split('\n');
+      const reformattedLines = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.match(/^\d+\.\s+\*\*.*\*\*\s+-\s+\*\*Services\*\*:\s+.*\.\s+-\s+\*\*Website\*\*:\s+\[.*\]\(.*\)$/)) {
+          // This is a business line in the old format
+          const match = line.match(/^(\d+)\.\s+(\*\*.*\*\*)\s+-\s+\*\*Services\*\*:\s+(.*)\.\s+-\s+\*\*Website\*\*:\s+(\[.*\]\(.*\))$/);
+          if (match) {
+            const [, number, name, services, website] = match;
+            reformattedLines.push(`${number}. ${name}`);
+            reformattedLines.push(`   - **Services**: ${services}.`);
+            reformattedLines.push(`   - **Website**: ${website}`);
+            reformattedLines.push(''); // Empty line for spacing
+          } else {
+            reformattedLines.push(line);
+          }
+        } else {
+          reformattedLines.push(line);
         }
-        return subPart;
-      });
-    });
+      }
+      
+      text = reformattedLines.join('\n');
+    }
+    
+    // Split text into lines and process each line
+    const lines = text.split('\n');
+    const processedLines = [];
+    
+    lines.forEach((line, lineIndex) => {
+      // 1. Define keywords
+      const keywords = [
+        'receptionist', 'digital receptionist', 'booking page', 'book a call',
+        platformName.toLowerCase(), business_slug?.toLowerCase()
+      ].filter(Boolean);
 
-    // Linkify keywords next
-    keywords.forEach((keyword, kwIdx) => {
-      let nextParts = [];
-      parts.forEach((part, partIdx) => {
-        if (typeof part !== 'string') {
-          nextParts.push(part);
-          return;
-        }
-        
-        const regex = new RegExp(`(${keyword})`, 'gi');
-        const split = part.split(regex);
-        
-        split.forEach((subPart, i) => {
-          if (subPart.toLowerCase() === keyword.toLowerCase()) {
-            nextParts.push(
+      // 2. URL detection regex that excludes trailing parentheses/punctuation
+      const urlPattern = /(https?:\/\/[^\s\)]+)/gi;
+      
+      let parts = [line];
+      
+      // Linkify actual URLs first
+      parts = parts.flatMap((part, partIdx) => {
+        if (typeof part !== 'string') return [part];
+        const split = part.split(urlPattern);
+        return split.map((subPart, i) => {
+          if (subPart.match(urlPattern)) {
+            return (
               <span 
-                key={`kw-${kwIdx}-${partIdx}-${i}`}
+                key={`url-${lineIndex}-${partIdx}-${i}`}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleBusinessLink();
+                  window.open(subPart, '_blank', 'noopener,noreferrer');
                 }}
                 style={{
                   color: '#2563eb',
                   textDecoration: 'underline',
                   cursor: 'pointer',
-                  fontWeight: '600'
+                  fontWeight: '600',
+                  wordBreak: 'break-all'
                 }}
               >
                 {subPart}
               </span>
             );
-          } else if (subPart) {
-            nextParts.push(subPart);
           }
+          return subPart;
         });
       });
-      parts = nextParts;
+
+      // Linkify keywords next
+      keywords.forEach((keyword, kwIdx) => {
+        let nextParts = [];
+        parts.forEach((part, partIdx) => {
+          if (typeof part !== 'string') {
+            nextParts.push(part);
+            return;
+          }
+          
+          const regex = new RegExp(`(${keyword})`, 'gi');
+          const split = part.split(regex);
+          
+          split.forEach((subPart, i) => {
+            if (subPart.toLowerCase() === keyword.toLowerCase()) {
+              nextParts.push(
+                <span 
+                  key={`kw-${kwIdx}-${lineIndex}-${partIdx}-${i}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBusinessLink();
+                  }}
+                  style={{
+                    color: '#2563eb',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  {subPart}
+                </span>
+              );
+            } else if (subPart) {
+              nextParts.push(subPart);
+            }
+          });
+        });
+        parts = nextParts;
+      });
+      
+      processedLines.push(...parts);
+      if (lineIndex < lines.length - 1) {
+        processedLines.push(<br key={`br-${lineIndex}`} />);
+      }
     });
     
-    return parts;
+    return processedLines;
   };
 
   const scrollToBottom = () => {
