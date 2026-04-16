@@ -40,9 +40,9 @@ chatbotApi.interceptors.response.use(
 
 const ChatbotConfig = () => {
   const [config, setConfig] = useState({
-    name: 'Business Name',
-    website_url: 'https://www.domain.com/en',
-    description: 'Business description',
+    name: '',
+    website_url: '',
+    description: '',
     vector_data: { embeddings_data: {} }
   });
 
@@ -60,12 +60,18 @@ const ChatbotConfig = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+
+    if (!config.name?.trim() || !config.website_url?.trim() || !config.description?.trim()) {
+      setSaveError('Please fill in all required fields (Name, Website, and Description).');
+      return;
+    }
+
     setSaveLoading(true);
     setSaveError(null);
     setSaveSuccess(false);
     try {
       console.log('Saving business config:', config);
-      
+
       // Try different data structures
       const dataVariations = [
         // Original structure
@@ -110,10 +116,10 @@ const ChatbotConfig = () => {
           vector_data: config.vector_data
         }
       ];
-      
+
       let response;
       let endpointTried = '';
-      
+
       // Try businesses endpoint with different data structures
       for (let i = 0; i < dataVariations.length; i++) {
         try {
@@ -136,7 +142,7 @@ const ChatbotConfig = () => {
           }
         }
       }
-      
+
       console.log('Bot Config successfully saved via:', endpointTried, response.data);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
@@ -158,7 +164,7 @@ const ChatbotConfig = () => {
     if (!window.confirm('Are you sure you want to delete this business configuration?')) return;
     try {
       console.log('Deleting business:', businessId);
-      
+
       // Try different endpoint formats
       try {
         await chatbotApi.delete(`/api/v1/businesses/${businessId}`);
@@ -166,7 +172,7 @@ const ChatbotConfig = () => {
         console.log('No slash endpoint failed, trying with trailing slash:', noSlashErr.response?.status);
         await chatbotApi.delete(`/api/v1/businesses/${businessId}/`);
       }
-      
+
       console.log('Business deleted successfully');
       handleFetch();
     } catch (err) {
@@ -185,7 +191,7 @@ const ChatbotConfig = () => {
   const handleUpdate = async (businessId, updatedConfig) => {
     try {
       console.log('Updating business:', businessId, 'with data:', updatedConfig);
-      
+
       // Try different endpoint formats
       let response;
       try {
@@ -199,7 +205,7 @@ const ChatbotConfig = () => {
           response = await chatbotApi.patch(`/api/v1/businesses/${businessId}/`, updatedConfig);
         }
       }
-      
+
       console.log('Business updated successfully:', response.data);
       setSaveSuccess(true);
       setConfig({
