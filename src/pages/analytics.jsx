@@ -21,7 +21,7 @@ ChartJS.register(
 
 // ── API instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
+  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-api-kuzr.onrender.com',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
@@ -37,10 +37,10 @@ const DATE_OPTIONS = ['Today', 'Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'T
 // ── Status config ──────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   PENDING_PAYMENT: { bg: '#fef3c7', color: '#92400e', label: 'Pending Payment' },
-  INITIATED:       { bg: '#dbeafe', color: '#1e40af', label: 'Initiated' },
-  CONFIRMED:       { bg: '#d1fae5', color: '#065f46', label: 'Confirmed' },
-  CANCELLED:       { bg: '#fee2e2', color: '#991b1b', label: 'Cancelled' },
-  EXPIRED:         { bg: '#f3f4f6', color: '#6b7280', label: 'Expired' },
+  INITIATED: { bg: '#dbeafe', color: '#1e40af', label: 'Initiated' },
+  CONFIRMED: { bg: '#d1fae5', color: '#065f46', label: 'Confirmed' },
+  CANCELLED: { bg: '#fee2e2', color: '#991b1b', label: 'Cancelled' },
+  EXPIRED: { bg: '#f3f4f6', color: '#6b7280', label: 'Expired' },
 };
 const getStatusStyle = (s) => STATUS_CONFIG[s] ?? { bg: '#f3f4f6', color: '#374151', label: s };
 
@@ -146,13 +146,13 @@ const Sk = ({ w = '80%', h = '14px', r = '4px' }) => (
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function Analytics() {
-  const [rawData,     setRawData]     = useState(null);
-  const [loading,     setLoading]     = useState(true);
-  const [error,       setError]       = useState(null);
-  const [dateFilter,  setDateFilter]  = useState('Last 30 Days');
-  const [showFilter,  setShowFilter]  = useState(false);
+  const [rawData, setRawData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dateFilter, setDateFilter] = useState('Last 30 Days');
+  const [showFilter, setShowFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [lastSync,    setLastSync]    = useState(null);
+  const [lastSync, setLastSync] = useState(null);
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -168,11 +168,11 @@ export default function Analytics() {
       setLastSync(new Date());
     } catch (err) {
       const status = err?.response?.status;
-      const msg    = err?.response?.data?.message ?? err?.response?.data?.error;
-      if (!err.response)       setError('Network error — cannot reach the server.');
+      const msg = err?.response?.data?.message ?? err?.response?.data?.error;
+      if (!err.response) setError('Network error — cannot reach the server.');
       else if (status === 401) setError('Session expired. Please log in again.');
       else if (status === 403) setError('Access denied (403). Check admin permissions.');
-      else                     setError(msg ?? `Error ${status ?? 'unknown'} fetching analytics.`);
+      else setError(msg ?? `Error ${status ?? 'unknown'} fetching analytics.`);
     } finally {
       setLoading(false);
     }
@@ -187,9 +187,9 @@ export default function Analytics() {
         responseType: 'blob',
         params: { period: dateFilter },
       });
-      const url  = window.URL.createObjectURL(new Blob([res.data]));
+      const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
-      link.href  = url;
+      link.href = url;
       link.setAttribute('download', `analytics-${Date.now()}.csv`);
       document.body.appendChild(link);
       link.click();
@@ -201,24 +201,24 @@ export default function Analytics() {
   };
 
   // ── Derived values from real API data ─────────────────────────────────
-  const totalBookings   = rawData?.total_bookings ?? 0;
-  const totalCalls      = rawData?.total_calls    ?? 0;
-  const recentBookings  = Array.isArray(rawData?.recent_bookings) ? rawData.recent_bookings : [];
+  const totalBookings = rawData?.total_bookings ?? 0;
+  const totalCalls = rawData?.total_calls ?? 0;
+  const recentBookings = Array.isArray(rawData?.recent_bookings) ? rawData.recent_bookings : [];
 
-  const pendingCount    = recentBookings.filter((b) => b.status === 'PENDING_PAYMENT').length;
-  const confirmedCount  = recentBookings.filter((b) => b.status === 'CONFIRMED').length;
+  const pendingCount = recentBookings.filter((b) => b.status === 'PENDING_PAYMENT').length;
+  const confirmedCount = recentBookings.filter((b) => b.status === 'CONFIRMED').length;
 
   // Chart derivations
-  const bookingTrends   = buildBookingTrends(recentBookings);
+  const bookingTrends = buildBookingTrends(recentBookings);
   const statusBreakdown = buildStatusBreakdown(recentBookings);
-  const hourlyVolume    = buildHourlyVolume(recentBookings);
+  const hourlyVolume = buildHourlyVolume(recentBookings);
 
   // ── Chart datasets ────────────────────────────────────────────────────
   const bookingTrendsData = {
     labels: bookingTrends.map((t) => t.label),
     datasets: [{
       label: 'Bookings',
-      data:  bookingTrends.map((t) => t.value),
+      data: bookingTrends.map((t) => t.value),
       borderColor: '#2563eb',
       backgroundColor: 'rgba(37,99,235,0.08)',
       fill: true,
@@ -230,10 +230,10 @@ export default function Analytics() {
 
   const STATUS_CHART_COLORS = {
     PENDING_PAYMENT: '#f59e0b',
-    INITIATED:       '#3b82f6',
-    CONFIRMED:       '#10b981',
-    CANCELLED:       '#ef4444',
-    EXPIRED:         '#94a3b8',
+    INITIATED: '#3b82f6',
+    CONFIRMED: '#10b981',
+    CANCELLED: '#ef4444',
+    EXPIRED: '#94a3b8',
   };
   const statusLabels = Object.keys(statusBreakdown);
   const bookingSourceData = {
@@ -250,7 +250,7 @@ export default function Analytics() {
     labels: hourlyVolume.map((h) => h.label),
     datasets: [{
       label: 'Bookings Created',
-      data:  hourlyVolume.map((h) => h.count),
+      data: hourlyVolume.map((h) => h.count),
       backgroundColor: 'rgba(37,99,235,0.75)',
       borderRadius: 6,
       borderSkipped: false,
@@ -259,10 +259,10 @@ export default function Analytics() {
 
   // ── Stat cards ────────────────────────────────────────────────────────
   const statCards = [
-    { label: 'Total Bookings',   value: totalBookings,  icon: Calendar,   color: '#2563eb' },
-    { label: 'Total Calls',      value: totalCalls,     icon: Phone,      color: '#7c3aed' },
-    { label: 'Pending Payment',  value: pendingCount,   icon: BarChart2,  color: '#f59e0b' },
-    { label: 'Confirmed',        value: confirmedCount, icon: DollarSign, color: '#10b981' },
+    { label: 'Total Bookings', value: totalBookings, icon: Calendar, color: '#2563eb' },
+    { label: 'Total Calls', value: totalCalls, icon: Phone, color: '#7c3aed' },
+    { label: 'Pending Payment', value: pendingCount, icon: BarChart2, color: '#f59e0b' },
+    { label: 'Confirmed', value: confirmedCount, icon: DollarSign, color: '#10b981' },
   ];
 
   // ── Filtered recent bookings for table ───────────────────────────────
@@ -287,7 +287,7 @@ export default function Analytics() {
         <header className="content-header">
           <div className="search-container">
             <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
             </svg>
             <input
               type="text"
@@ -501,13 +501,13 @@ export default function Analytics() {
             ) : (
               filtered.map((b, i) => {
                 const statusStyle = getStatusStyle(b.status);
-                const initials    = getInitials(b.customer_name);
+                const initials = getInitials(b.customer_name);
                 const avatarColor = getAvatarColor(b.customer_name);
-                const createdAt   = b.created_at
+                const createdAt = b.created_at
                   ? new Date(b.created_at).toLocaleString('en-US', {
-                      month: 'short', day: 'numeric',
-                      hour: '2-digit', minute: '2-digit',
-                    })
+                    month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })
                   : '—';
 
                 return (

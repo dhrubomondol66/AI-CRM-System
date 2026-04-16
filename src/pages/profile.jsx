@@ -14,7 +14,7 @@ import { usePlatform as usePlatformContact } from "./platformContact";
 
 // ── API instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || "https://reservation-xynh.onrender.com",
+  baseURL: import.meta?.env?.VITE_API_BASE_URL || "https://reservation-api-kuzr.onrender.com",
   withCredentials: true,
   headers: { "Content-Type": "application/json", Accept: "application/json" },
 });
@@ -29,9 +29,9 @@ const AdminProfileDashboard = () => {
   const navigate = useNavigate();
 
   const { platformName, setPlatformName } = usePlatform();
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [smsAlerts, setSmsAlerts] = useState(false);
-  const [whatsapp, setWhatsapp] = useState(false);
+  // const [emailAlerts, setEmailAlerts] = useState(true);
+  // const [smsAlerts, setSmsAlerts] = useState(false);
+  // const [whatsapp, setWhatsapp] = useState(false);
   // At the top, update the import to get refreshPlatformContact too
   const { platformContact: ctxContact, setPlatformContact, refreshPlatformContact } = usePlatformContact();
 
@@ -42,6 +42,7 @@ const AdminProfileDashboard = () => {
     address: ctxContact.contact_address,
     company: platformName,
     timezone: 'Eastern Time (ET)',
+    api_keys: { platform: '', widget: '' },
   });
 
   // Replace handlePlatformContactsave with this:
@@ -50,28 +51,29 @@ const AdminProfileDashboard = () => {
     try {
       await api.put('/api/v1/admin/platform-contact', {
         contact_phone: profile.phone,
-      contact_email: profile.email,
-      contact_address: profile.address,
-      updated_at: new Date().toISOString(),
-    });
-    // Update context immediately so landing page reflects change
-    setPlatformContact({
-      contact_phone: profile.phone,
-      contact_email: profile.email,
-      contact_address: profile.address,
-    });
+        contact_email: profile.email,
+        contact_address: profile.address,
+        updated_at: new Date().toISOString(),
+      });
+      // Update context immediately so landing page reflects change
+      setPlatformContact({
+        contact_phone: profile.phone,
+        contact_email: profile.email,
+        contact_address: profile.address,
+      });
       // Also re-fetch from server to confirm
-    await refreshPlatformContact();
-    alert('Platform contact updated successfully!');
+      await refreshPlatformContact();
+      alert('Platform contact updated successfully!');
     } catch (err) {
       const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? 'Failed to update platform contact. Please try again.';
       alert(msg);
     }
   };
 
-  
+
   const [platformNameInput, setPlatformNameInput] = useState(platformName);
   const [platformNameSaving, setPlatformNameSaving] = useState(false);
+  const [api_keysSaving, setApi_keysSaving] = useState(false);
   const [platformNameStatus, setPlatformNameStatus] = useState(null);
   const [platformNameError, setPlatformNameError] = useState("");
 
@@ -123,6 +125,30 @@ const AdminProfileDashboard = () => {
     setPlatformNameInput(platformName);
     setPlatformNameStatus(null);
     setPlatformNameError("");
+  };
+
+  const handleAPIKeysSave = async (e) => {
+    e.preventDefault();
+    setApi_keysSaving(true);
+    try {
+      await api.patch("/api/v1/admin/settings/api-keys", {
+        api_keys: profile.api_keys,
+      });
+      setProfile((prev) => ({ ...prev, api_keys: profile.api_keys }));
+      alert("API keys updated successfully!");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ??
+        err?.response?.data?.error ??
+        "Failed to update API keys. Please try again.";
+      alert(msg);
+    } finally {
+      setApi_keysSaving(false);
+    }
+  };
+
+  const handleAPIKeysCancel = () => {
+    setProfile((prev) => ({ ...prev, api_keys: { platform: '', widget: '' } }));
   };
 
   return (
@@ -236,8 +262,8 @@ const AdminProfileDashboard = () => {
           <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '8px', boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)', flex: 0.4 }}>
             <h2 style={{ textAlign: 'center', color: 'black' }}>Admin Personal Details</h2>
             <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem', textAlign: 'center' }}>
-                    Updates instantly in homepage.
-                  </p>
+              Updates instantly in homepage.
+            </p>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'black' }}>Phone</label>
             <input
               type="text"
@@ -254,7 +280,7 @@ const AdminProfileDashboard = () => {
                 cursor: 'text',
                 color: 'black'
               }}
-              />
+            />
 
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: 'black' }}>Email</label>
             <input
@@ -315,8 +341,85 @@ const AdminProfileDashboard = () => {
           </div>
         </div>
 
-        {/* ── Right Column ── */}
-        {/* <div className="right-col">
+        <div>
+          {/* ── Change API ── */}
+          <div style={{ marginTop: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#1e293b', margin: 0, textAlign: 'center' }}>
+                API Changes
+              </h3>
+              <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem', textAlign: 'center' }}>
+                Put your API key in this field and configure.
+              </p>
+            </div>
+
+            <form onSubmit={handleAPIKeysSave}>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#374151', marginBottom: '0.4rem' }}>
+                  For Platform
+                </label>
+                <input
+                  value={profile.api_keys?.platform || ''}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, api_keys: { ...prev.api_keys, platform: e.target.value } }))}
+                  placeholder="Enter the platform key"
+                  style={{
+                    width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.875rem',
+                    border: `1.5px solid ${platformNameStatus === 'error' ? '#fca5a5' : platformNameStatus === 'success' ? '#6ee7b7' : '#e2e8f0'}`,
+                    borderRadius: '8px', outline: 'none',
+                    background: api_keysSaving ? '#f1f5f9' : 'white',
+                    color: '#1e293b', transition: 'border-color 0.2s', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+
+              {/* <div style={{ marginBottom: '0.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#374151', marginBottom: '0.4rem' }}>
+                  For Widget
+                </label>
+                <input
+                  value={profile.api_keys?.widget || ''}
+                  onChange={(e) => setProfile((prev) => ({ ...prev, api_keys: { ...prev.api_keys, widget: e.target.value } }))}
+                  placeholder="Enter the widget key"
+                  style={{
+                    width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.875rem',
+                    border: `1.5px solid ${platformNameStatus === 'error' ? '#fca5a5' : platformNameStatus === 'success' ? '#6ee7b7' : '#e2e8f0'}`,
+                    borderRadius: '8px', outline: 'none',
+                    background: api_keysSaving ? '#f1f5f9' : 'white',
+                    color: '#1e293b', transition: 'border-color 0.2s', boxSizing: 'border-box',
+                  }}
+                />
+              </div> */}
+
+              {platformNameStatus === 'success' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#059669', marginBottom: '0.75rem' }}>
+                  <CheckCircle size={14} /> Platform name updated everywhere!
+                </div>
+              )}
+              {platformNameStatus === 'error' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#dc2626', marginBottom: '0.75rem' }}>
+                  <AlertCircle size={14} /> {platformNameError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={handleAPIKeysCancel} disabled={api_keysSaving}
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: '600', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: 'white', color: '#374151', cursor: api_keysSaving ? 'not-allowed' : 'pointer', opacity: api_keysSaving ? 0.6 : 1 }}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={(!profile.api_keys?.platform?.trim() && !profile.api_keys?.widget?.trim()) || api_keysSaving}
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', fontWeight: '600', borderRadius: '8px', border: 'none', background: (!profile.api_keys?.platform?.trim() && !profile.api_keys?.widget?.trim()) || api_keysSaving ? '#93c5fd' : '#2563eb', color: 'white', cursor: (!profile.api_keys?.platform?.trim() && !profile.api_keys?.widget?.trim()) || api_keysSaving ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'background 0.2s' }}>
+                  {api_keysSaving && <Loader size={13} className="spinning" />}
+                  {api_keysSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right Column ── */}
+      {/* <div className="right-col">
           <section className="section">
             <h2 className="section-title">
               <img src={notification} alt="notification" className="notification-icon" />
@@ -348,7 +451,6 @@ const AdminProfileDashboard = () => {
           </section>
         </div> */}
 
-      </div>
     </div>
   );
 };

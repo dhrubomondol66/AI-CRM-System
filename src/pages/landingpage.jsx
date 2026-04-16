@@ -25,7 +25,7 @@ import { usePlatform as usePlatformContact } from './platformContact';
 
 // ── Axios instance ─────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
+  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-api-kuzr.onrender.com',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
@@ -769,7 +769,7 @@ export default function ReservationCRM() {
               </div>
             )}
           </div>
-          <div className="status-card" style={{ maxWidth: '600px', margin: '0 auto'}}>
+          <div className="status-card" style={{ maxWidth: '600px', margin: '0 auto' }}>
             <div style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '10px' }}>
                 Enter your unique tracking code to share your feedback.

@@ -7,7 +7,7 @@ import axios from 'axios';
 
 // ── API Instance ───────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
+  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-api-kuzr.onrender.com',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
@@ -425,7 +425,7 @@ export default function AIConfiguration() {
                   key={b.id}
                   className={`service-card ${selectedBusinessId === b.id ? 'service-card--selected' : ''}`}
                   onClick={() => setSelectedBusinessId(b.id)}
-                  style={{ cursor: 'pointer', gap: '0.5rem'}}
+                  style={{ cursor: 'pointer', gap: '0.5rem' }}
                 >
                   {selectedBusinessId === b.id && <span className="service-card-check"><CheckCircle size={18} /></span>}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingRight: '22px' }}>

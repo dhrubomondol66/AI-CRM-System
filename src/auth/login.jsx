@@ -5,7 +5,7 @@ import Cookies from 'js-cookie';
 import '../assets/styles/login.css';
 
 const api = axios.create({
-    baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
+    baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-api-kuzr.onrender.com',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ const AdminLogin = () => {
 
     const validate = () => {
         if (!email.trim()) { setError('Please enter your email or username.'); return false; }
-        if (!password)     { setError('Please enter your password.'); return false; }
+        if (!password) { setError('Please enter your password.'); return false; }
         if (password.length < 6) { setError('Password must be at least 6 characters.'); return false; }
         return true;
     };
@@ -69,9 +69,9 @@ const AdminLogin = () => {
                 err?.response?.status === 401
                     ? 'Invalid email or password. Please try again.'
                     : err?.response?.data?.message ||
-                      err?.response?.data?.error ||
-                      err?.message ||
-                      'Login failed. Please check your credentials and try again.';
+                    err?.response?.data?.error ||
+                    err?.message ||
+                    'Login failed. Please check your credentials and try again.';
             setError(message);
         } finally {
             setLoading(false);

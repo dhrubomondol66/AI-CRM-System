@@ -15,7 +15,7 @@ import VoiceCallModal from '../components/VoiceCallModal';
 
 // ── Axios instance ──────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-xynh.onrender.com',
+  baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-api-kuzr.onrender.com',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
@@ -136,7 +136,7 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
     deviceRef.current?.destroy();
     deviceRef.current = null;
 
-    const res = await api.post('/api/v1/voice/twilio/', {
+    const res = await api.post('https://ai-reservation.onrender.com/voice-receptionist/', {
       business_slug,
       service_name: selectedService?.title,
       user_session_id: sessionId,
@@ -160,7 +160,7 @@ function useTwilioVoice({ business_slug, selectedService, sessionId }) {
 
     device.on('tokenWillExpire', async () => {
       try {
-        const r = await api.post('/api/v1/voice/twilio/', {
+        const r = await api.post('https://ai-reservation.onrender.com/voice-receptionist/', {
           business_slug, service_name: selectedService?.title,
           user_session_id: sessionId, action: 'token',
         });
@@ -250,7 +250,7 @@ function StarIcon({ filled, size = 10 }) {
 }
 
 // ── CallButton component ───────────────────────────────────────────────────
-function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCall }) {
+function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCall, businessName }) {
   const { callState, startCall, endCall, isMuted, toggleMute, callDuration, error } =
     useTwilioVoice({ business_slug, selectedService, sessionId });
 
@@ -292,7 +292,13 @@ function CallButton({ business_slug, selectedService, sessionId, setShowVoiceCal
         className="start-call-btn"
         onClick={() => {
           if (!selectedService) { alert('Select a service first'); return; }
-          setShowVoiceCall(true);
+          
+          // Re-route the user directly to the external Voice Receptionist
+          const url = new URL('https://ai-reservation.onrender.com/voice-receptionist/');
+          url.searchParams.set('biz', businessName || business_slug);
+          url.searchParams.set('service', selectedService.title);
+          
+          window.location.href = url.toString();
         }}
       >
         <Phone className="phone-icon" /> Start Call
@@ -569,7 +575,7 @@ export default function BookingAssistant() {
       setServicesLoading(true);
       setError(null);
       try {
-        const res = await api.get(`/api/v1/public/${business_slug}/services/`, {
+        const res = await api.get(`/api/v1/public/${business_slug}/services`, {
           params: { popular_only: false },
         });
         const raw = Array.isArray(res.data)
@@ -661,7 +667,7 @@ export default function BookingAssistant() {
       try {
         // Try service-specific endpoint first
         const res = await api.get(
-          `/api/v1/public/${business_slug}/services/${selectedService.id}/images/`
+          `/api/v1/public/${business_slug}/services/${selectedService.id}/images`
         );
         const imgData = extractImages(res.data);
         setServiceImages(imgData);
@@ -669,7 +675,7 @@ export default function BookingAssistant() {
         // Fallback: try business-level images endpoint
         try {
           const res2 = await api.get(
-            `/api/v1/public/services/${selectedService.id}/images/`
+            `/api/v1/public/services/${selectedService.id}/images`
           );
           const imgData = extractImages(res2.data);
           setServiceImages(imgData);
@@ -1168,7 +1174,7 @@ export default function BookingAssistant() {
               {/* Chat Header */}
               <div className="chat-header">
                 <div className="assistant-info">
-                  <div className="assistant-avatar" style={{marginTop: '-13px'}}><div className="avatar-circle" /></div>
+                  <div className="assistant-avatar" style={{ marginTop: '-13px' }}><div className="avatar-circle" /></div>
                   <div>
                     <h3 className="assistant-name">AI Booking Assistant</h3>
                     <p className="assistant-status">
@@ -1181,6 +1187,7 @@ export default function BookingAssistant() {
                 <div title={!selectedService ? 'Select a service to enable voice call' : undefined}>
                   <CallButton
                     business_slug={business_slug}
+                    businessName={business?.name || business_slug}
                     selectedService={selectedService}
                     sessionId={sessionId}
                     setShowVoiceCall={setShowVoiceCall}

@@ -3,7 +3,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const api = axios.create({
-  baseURL: import.meta.env.PROD ? 'https://reservation-xynh.onrender.com' : '',
+  baseURL: import.meta.env.PROD ? 'https://reservation-api-kuzr.onrender.com' : '',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
 
 const PlatformContext = createContext({
   platformName: 'AI Reservation & CRM System',
-  setPlatformName: () => {},
+  setPlatformName: () => { },
 });
 
 export const PlatformProvider = ({ children }) => {

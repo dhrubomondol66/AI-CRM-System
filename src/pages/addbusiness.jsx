@@ -7,7 +7,7 @@ import Cookies from "js-cookie";
 
 // ── Axios instance ─────────────────────────────────────────────────────────
 const api = axios.create({
-  baseURL: import.meta?.env?.VITE_API_BASE_URL || "https://reservation-xynh.onrender.com",
+  baseURL: import.meta?.env?.VITE_API_BASE_URL || "https://reservation-api-kuzr.onrender.com",
   withCredentials: true,
   headers: { "Content-Type": "application/json", Accept: "application/json" },
 });
