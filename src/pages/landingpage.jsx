@@ -155,7 +155,12 @@ function ReviewDropdown({ trackingId, bookingId, initialOpen = false }) {
       });
       setSubmitted(true);
     } catch (err) {
-      setError(formatBackendError(err));
+      // Handle missing endpoint gracefully
+      if (err.response?.status === 400 || err.response?.status === 405) {
+        setError('Review submission is currently unavailable. Please try again later.');
+      } else {
+        setError(formatBackendError(err));
+      }
     } finally {
       setLoading(false);
     }
