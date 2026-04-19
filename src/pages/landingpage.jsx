@@ -385,12 +385,9 @@ export default function ReservationCRM() {
     };
 
     const endpoints = [
-      '/api/v1/public/contact',
       '/api/v1/contact',
-      '/api/v1/public/contact/',
-      '/api/v1/contact/',
       '/api/v1/public/contact-us',
-      '/api/v1/public/contact-us/',
+      '/api/v1/contact-us',
     ];
 
     let lastError = null;
@@ -1066,7 +1063,7 @@ export default function ReservationCRM() {
             <div className="newsletter">
               <h4>Newsletter</h4>
               <p>Get the latest updates and news</p>
-              <form onSubmit={(e) => e.preventDefault()}>
+              <form onSubmit={(e) => { e.preventDefault(); alert('This feature is not available right now.'); }}>
                 <input type="email" placeholder="Your email" className="newsletter-input" />
                 <button type="submit" className="btn-submit">Subscribe</button>
               </form>
