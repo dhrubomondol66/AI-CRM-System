@@ -105,10 +105,10 @@ const Sidebar = () => {
           <Sliders className="menu-icon" />
           <span>AI Configuration</span>
         </button>
-        <button className={`menu-item ${activeMenu === 'Chatbot' ? 'active' : ''}`} onClick={() => handleMenuClick('Chatbot')}>
+        {/* <button className={`menu-item ${activeMenu === 'Chatbot' ? 'active' : ''}`} onClick={() => handleMenuClick('Chatbot')}>
           <MessageSquare className="menu-icon" />
           <span>Chatbot Configuration</span>
-        </button>
+        </button> */}
       </nav>
 
       <div className="sidebar-footer">
