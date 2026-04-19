@@ -120,7 +120,7 @@ const Sidebar = () => {
         <button className="profile-btn" onClick={() => handleMenuClick('Profile')}>
           <div className={`user-profile ${activeMenu === 'Profile' ? 'active' : ''}`}>
             <img
-              src="/src/assets/logo.png.png"
+              src={logo}
               alt="User"
               className="user-avatar"
               style={{ width: '50px', height: '50px' }}
@@ -129,7 +129,7 @@ const Sidebar = () => {
               <div className="user-name">Brock Dixon</div>
               <div className="user-role">Admin</div>
             </div>
-            <div className="notification-badge">🔔</div>
+            {/* <div className="notification-badge">🔔</div> */}
           </div>
         </button>
       </div>
