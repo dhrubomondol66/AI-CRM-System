@@ -520,7 +520,7 @@ export default function ReservationCRM() {
               <Link to={`/customerservices/`}>
                 <button className="btn-primary1 btn-large">Get Started ⟶</button>
               </Link>
-              <button className="btn-secondary1 btn-large">Watch Demo</button>
+              {/* <button className="btn-secondary1 btn-large">Watch Demo</button> */}
             </div>
             <p className="trusted">Trusted by 500+ businesses</p>
           </div>
