@@ -7,7 +7,7 @@ import Cookies from 'js-cookie';
 
 // ── API Instance for Chatbot Configuration ──────────────────────────────────
 const chatbotApi = axios.create({
-  baseURL: import.meta.env.PROD ? 'https://ai-reservation.onrender.com' : '',
+  baseURL: import.meta.env.PROD ? 'https://ai-reservation-q29p.onrender.com' : '',
   headers: { 'Content-Type': 'application/json' }
 });
 

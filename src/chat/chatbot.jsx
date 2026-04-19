@@ -18,11 +18,11 @@ const getCookie = (name) => {
   if (document.cookie && document.cookie !== '') {
     const cookies = document.cookie.split(';');
     for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-        }
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
     }
   }
   return cookieValue;
@@ -49,21 +49,21 @@ const getUserId = () => {
 
 // ✅ Client-Side History Buffer
 const getChatBuffer = (businessId) => {
-    const buf = localStorage.getItem(`chat_buffer_${businessId}`);
-    return buf ? JSON.parse(buf) : [];
+  const buf = localStorage.getItem(`chat_buffer_${businessId}`);
+  return buf ? JSON.parse(buf) : [];
 };
 
 const updateChatBuffer = (businessId, role, content) => {
-    const buf = getChatBuffer(businessId);
-    buf.push({ role, content });
-    // Limit to last 20 messages to save tokens/storage
-    if (buf.length > 20) buf.shift(); 
-    localStorage.setItem(`chat_buffer_${businessId}`, JSON.stringify(buf));
+  const buf = getChatBuffer(businessId);
+  buf.push({ role, content });
+  // Limit to last 20 messages to save tokens/storage
+  if (buf.length > 20) buf.shift();
+  localStorage.setItem(`chat_buffer_${businessId}`, JSON.stringify(buf));
 };
 
 const chatbotapi = axios.create({
   baseURL: import.meta.env.PROD
-    ? "https://ai-reservation.onrender.com"   // ONLY domain
+    ? "https://ai-reservation-q29p.onrender.com"   // ONLY domain
     : "",
   withCredentials: true, // Required for Django session cookies (credentials: 'include')
   headers: {
@@ -86,20 +86,20 @@ const ChatBot = ({ isWidget = true, onClose }) => {
   const { business_slug } = useParams();
 
   const [message, setMessage] = useState('');
-  
+
   const businessNameSlug = business_slug || platformName?.toLowerCase()
     ?.replace(/[^a-z0-9\s-]/g, '')
     ?.replace(/\s+/g, '-')
     ?.replace(/-+/g, '-');
-    
+
   const baseUrl = window.location.origin;
 
   const [messages, setMessages] = useState([
-    { 
-      id: 1, 
+    {
+      id: 1,
       text: `Hello! I'm your AI assistant. How can I help you manage your business today?`,
-      sender: 'ai', 
-      time: '10:00 AM' 
+      sender: 'ai',
+      time: '10:00 AM'
     },
   ]);
   const messagesEndRef = useRef(null);
@@ -120,130 +120,87 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       .replace(/-+/g, '-');        // Remove consecutive -
     navigate(`/receptionist/${businessName}`);
   };
-
   const renderMessageText = (text) => {
     if (!text) return null;
-    
-    // Check if this is a business list response and reformat it
-    if (text.includes('businesses available') && text.includes('**Services**') && text.includes('**Website**')) {
-      // Split into lines
-      const lines = text.split('\n');
-      const reformattedLines = [];
-      
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line.match(/^\d+\.\s+\*\*.*\*\*\s+-\s+\*\*Services\*\*:\s+.*\.\s+-\s+\*\*Website\*\*:\s+\[.*\]\(.*\)$/)) {
-          // This is a business line in the old format
-          const match = line.match(/^(\d+)\.\s+(\*\*.*\*\*)\s+-\s+\*\*Services\*\*:\s+(.*)\.\s+-\s+\*\*Website\*\*:\s+(\[.*\]\(.*\))$/);
-          if (match) {
-            const [, number, name, services, website] = match;
-            reformattedLines.push(`${number}. ${name}`);
-            reformattedLines.push(`   - **Services**: ${services}.`);
-            reformattedLines.push(`   - **Website**: ${website}`);
-            reformattedLines.push(''); // Empty line for spacing
-          } else {
-            reformattedLines.push(line);
-          }
-        } else {
-          reformattedLines.push(line);
-        }
-      }
-      
-      text = reformattedLines.join('\n');
-    }
-    
-    // Split text into lines and process each line
-    const lines = text.split('\n');
-    const processedLines = [];
-    
-    lines.forEach((line, lineIndex) => {
-      // 1. Define keywords
-      const keywords = [
-        'receptionist', 'digital receptionist', 'booking page', 'book a call',
-        platformName.toLowerCase(), business_slug?.toLowerCase()
-      ].filter(Boolean);
 
-      // 2. URL detection regex that excludes trailing parentheses/punctuation
-      const urlPattern = /(https?:\/\/[^\s\)]+)/gi;
+    // 1. Detect if the message contains business listings in the format:
+    // - **Description** — [Name](URL)
+    const businessPattern = /-\s+\*\*(.*?)\*\*\s+—\s+\[(.*?)\]\((.*?)\)/g;
+    const businesses = [];
+    let match;
+    while ((match = businessPattern.exec(text)) !== null) {
+      businesses.push({ description: match[1], name: match[2], url: match[3] });
+    }
+
+    if (businesses.length > 0) {
+      // Split the text to get the intro and outro around the business list
+      const introText = text.split(/-\s+\*\*/)[0].trim();
       
-      let parts = [line];
-      
-      // Linkify actual URLs first
-      parts = parts.flatMap((part, partIdx) => {
-        if (typeof part !== 'string') return [part];
-        const split = part.split(urlPattern);
-        return split.map((subPart, i) => {
-          if (subPart.match(urlPattern)) {
+      return (
+        <div className="message-content-wrapper">
+          {introText && <p className="message-intro">{introText}</p>}
+          <div className="business-document-list">
+            {businesses.map((biz, idx) => (
+              <div key={idx} className="business-doc-card">
+                <div className="doc-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div className="doc-details">
+                  <div className="doc-description">{biz.description}</div>
+                  <h4 className="doc-business-name">{biz.name}</h4>
+                  <button 
+                    className="doc-view-btn"
+                    onClick={() => window.open(biz.url, '_blank')}
+                  >
+                    View Document Profile
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Default markdown-lite rendering for other messages
+    const lines = text.split('\n');
+    return lines.map((line, i) => {
+      // Simple bold detection
+      const parts = line.split(/(\*\*.*?\*\*)/g);
+      const renderedParts = parts.map((part, pi) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return <strong key={pi}>{part.slice(2, -2)}</strong>;
+        }
+        // Link detection
+        const linkParts = part.split(/(\[.*?\]\(.*?\))/g);
+        return linkParts.map((lp, lpi) => {
+          const linkMatch = lp.match(/\[(.*?)\]\((.*?)\)/);
+          if (linkMatch) {
             return (
-              <span 
-                key={`url-${lineIndex}-${partIdx}-${i}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.open(subPart, '_blank', 'noopener,noreferrer');
-                }}
-                style={{
-                  color: '#2563eb',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontWeight: '600',
-                  wordBreak: 'break-all'
-                }}
+              <a 
+                key={lpi} 
+                href={linkMatch[2]} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: '#2563eb', textDecoration: 'underline' }}
               >
-                {subPart}
-              </span>
+                {linkMatch[1]}
+              </a>
             );
           }
-          return subPart;
+          return lp;
         });
       });
-
-      // Linkify keywords next
-      keywords.forEach((keyword, kwIdx) => {
-        let nextParts = [];
-        parts.forEach((part, partIdx) => {
-          if (typeof part !== 'string') {
-            nextParts.push(part);
-            return;
-          }
-          
-          const regex = new RegExp(`(${keyword})`, 'gi');
-          const split = part.split(regex);
-          
-          split.forEach((subPart, i) => {
-            if (subPart.toLowerCase() === keyword.toLowerCase()) {
-              nextParts.push(
-                <span 
-                  key={`kw-${kwIdx}-${lineIndex}-${partIdx}-${i}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleBusinessLink();
-                  }}
-                  style={{
-                    color: '#2563eb',
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                    fontWeight: '600'
-                  }}
-                >
-                  {subPart}
-                </span>
-              );
-            } else if (subPart) {
-              nextParts.push(subPart);
-            }
-          });
-        });
-        parts = nextParts;
-      });
-      
-      processedLines.push(...parts);
-      if (lineIndex < lines.length - 1) {
-        processedLines.push(<br key={`br-${lineIndex}`} />);
-      }
+      return (
+        <React.Fragment key={i}>
+          {renderedParts}
+          {i < lines.length - 1 && <br />}
+        </React.Fragment>
+      );
     });
-    
-    return processedLines;
   };
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -281,7 +238,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
 
     setMessages([...messages, newMessage]);
     setMessage('');
-    
+
     // Show typing indicator
     setIsTyping(true);
 
@@ -290,7 +247,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
     try {
       // Debug log to confirm API URL
       console.log("API URL:", chatbotapi.defaults.baseURL);
-      
+
       // Call the chatbot API with persistent session IDs and browser-side chat history
       const response = await chatbotapi.post('/api/global-chat/', {
         message: message,
@@ -307,14 +264,14 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       }
 
       const responseText = response.data?.response || response.data?.message || response.data?.answer || response.data?.text || JSON.stringify(response.data);
-      
+
       const aiResponse = {
         id: Date.now() + 1,
         text: responseText,
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      
+
       // Hide typing indicator and show AI response
       setIsTyping(false);
       setMessages(prev => [...prev, aiResponse]);
@@ -325,7 +282,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
 
     } catch (error) {
       console.error('Chatbot API error:', error);
-      
+
       // Simple error response when backend fails
       const errorResponse = {
         id: Date.now() + 1,
@@ -342,7 +299,7 @@ const ChatBot = ({ isWidget = true, onClose }) => {
       <div className="widget-chat-header">
         <div className="widget-chat-header-avatar">
           <div className="widget-avatar-circle">
-            <img src={chatbot} alt="chatbot" style={{height:'40px', width:'auto'}}/>
+            <img src={chatbot} alt="chatbot" style={{ height: '40px', width: 'auto' }} />
           </div>
         </div>
         <div className="widget-chat-header-info">
@@ -368,26 +325,26 @@ const ChatBot = ({ isWidget = true, onClose }) => {
             <div className="widget-message-time">{msg.time}</div>
           </div>
         ))}
-        
+
         {/* Typing Indicator */}
         {isTyping && (
           <div className="widget-message-wrapper ai">
             <div className="widget-message-time">AI is typing{typingDots}</div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       <form className="widget-chat-input-area" onSubmit={handleSend}>
-        
+
         <input
           type="text"
           className="widget-chat-input"
           placeholder="Ask me anything..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          style={{color:"black"}}
+          style={{ color: "black" }}
         />
         <button type="submit" className="widget-send-button" disabled={!message.trim()}>
           <img src={send} alt="send" />

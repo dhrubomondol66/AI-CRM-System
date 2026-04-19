@@ -120,9 +120,10 @@ const Sidebar = () => {
         <button className="profile-btn" onClick={() => handleMenuClick('Profile')}>
           <div className={`user-profile ${activeMenu === 'Profile' ? 'active' : ''}`}>
             <img
-              src="https://i.pravatar.cc/150?img=12"
+              src="/src/assets/logo.png.png"
               alt="User"
               className="user-avatar"
+              style={{ width: '50px', height: '50px' }}
             />
             <div className="user-info">
               <div className="user-name">Brock Dixon</div>

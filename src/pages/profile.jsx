@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import notification from "../assets/notification.png";
-import email from "../assets/email.png";
-import sms from "../assets/chatting.png";
-import whatsappIcon from "../assets/whatsapp.png";
+// import notification from "../assets/notification.png";
+// import email from "../assets/email.png";
+// import sms from "../assets/chatting.png";
+// import whatsappIcon from "../assets/whatsapp.png";
 import "../assets/styles/adminProfile.css";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
@@ -44,6 +44,24 @@ const AdminProfileDashboard = () => {
     timezone: 'Eastern Time (ET)',
     api_keys: { platform: '', widget: '' },
   });
+
+  // Fetch existing API keys on mount
+  useEffect(() => {
+    const fetchAPIKeys = async () => {
+      try {
+        const res = await api.get("/api/v1/admin/settings/api-keys");
+        if (res.data?.openai_api_key) {
+          setProfile(prev => ({
+            ...prev,
+            api_keys: { ...prev.api_keys, platform: res.data.openai_api_key }
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch API keys:", err);
+      }
+    };
+    fetchAPIKeys();
+  }, []);
 
   // Replace handlePlatformContactsave with this:
   const handlePlatformContactsave = async (e) => {
@@ -150,13 +168,18 @@ const AdminProfileDashboard = () => {
     setApiKeyStatus(null);
     setApiKeyError("");
 
+    const payload = {
+      openai_api_key: profile.api_keys.platform,
+    };
+
     try {
-      await api.patch("/api/v1/admin/settings/api-keys", {
-        api_keys: profile.api_keys,
-      });
+      const response = await api.patch("/api/v1/admin/settings/api-keys", payload);
+      console.log("Save Success. Server Response:", response.data);
+      
       setProfile((prev) => ({ ...prev, api_keys: profile.api_keys }));
       setApiKeyStatus("success");
     } catch (err) {
+      console.error("Save Error:", err);
       const msg =
         err?.response?.data?.message ??
         err?.response?.data?.error ??

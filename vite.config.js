@@ -18,7 +18,7 @@ export default defineConfig({
     historyApiFallback: true,
     proxy: {
       '/api/v1': {
-        target: 'https://ai-reservation.onrender.com',
+        target: 'https://ai-reservation-q29p.onrender.com',
         changeOrigin: true,
         secure: false,
         configure: (proxy, options) => {
@@ -40,13 +40,13 @@ export default defineConfig({
         }
       },
       '/api/global-chat': {
-        target: 'https://ai-reservation.onrender.com',
+        target: 'https://ai-reservation-q29p.onrender.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace('/api/global-chat', '/api/global-chat'),
       },
       '/create': {
-        target: 'https://ai-reservation.onrender.com',
+        target: 'https://ai-reservation-q29p.onrender.com',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace('/create', '/create'),
