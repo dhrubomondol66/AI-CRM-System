@@ -1272,8 +1272,6 @@ export default function BookingAssistant() {
               {/* Chat Input */}
               <div className="chat-input-container">
                 <div className="chat-input-wrapper">
-                  <button className="input-action-btn"><Smile className="input-icon" /></button>
-                  <button className="input-action-btn"><Paperclip className="input-icon" /></button>
                   <input
                     type="text"
                     placeholder={selectedService ? 'Type a message...' : 'Select a service to start chatting...'}

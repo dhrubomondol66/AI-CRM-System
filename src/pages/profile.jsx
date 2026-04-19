@@ -76,6 +76,8 @@ const AdminProfileDashboard = () => {
   const [api_keysSaving, setApi_keysSaving] = useState(false);
   const [platformNameStatus, setPlatformNameStatus] = useState(null);
   const [platformNameError, setPlatformNameError] = useState("");
+  const [apiKeyStatus, setApiKeyStatus] = useState(null);
+  const [apiKeyError, setApiKeyError] = useState("");
 
   const stats = useMemo(
     () => ({
@@ -129,26 +131,48 @@ const AdminProfileDashboard = () => {
 
   const handleAPIKeysSave = async (e) => {
     e.preventDefault();
+    const platformKey = profile.api_keys?.platform?.trim() || '';
+
+    // Validation
+    if (!platformKey.startsWith('sk-')) {
+      setApiKeyError("Invalid format. OpenAI Project keys must start with 'sk-'");
+      setApiKeyStatus("error");
+      return;
+    }
+
+    if (platformKey.length < 100) {
+      setApiKeyError("Key seems too short. Please ensure you copied the entire key.");
+      setApiKeyStatus("error");
+      return;
+    }
+
     setApi_keysSaving(true);
+    setApiKeyStatus(null);
+    setApiKeyError("");
+
     try {
       await api.patch("/api/v1/admin/settings/api-keys", {
         api_keys: profile.api_keys,
       });
       setProfile((prev) => ({ ...prev, api_keys: profile.api_keys }));
-      alert("API keys updated successfully!");
+      setApiKeyStatus("success");
     } catch (err) {
       const msg =
         err?.response?.data?.message ??
         err?.response?.data?.error ??
         "Failed to update API keys. Please try again.";
-      alert(msg);
+      setApiKeyError(msg);
+      setApiKeyStatus("error");
     } finally {
       setApi_keysSaving(false);
+      setTimeout(() => setApiKeyStatus(null), 5000);
     }
   };
 
   const handleAPIKeysCancel = () => {
     setProfile((prev) => ({ ...prev, api_keys: { platform: '', widget: '' } }));
+    setApiKeyStatus(null);
+    setApiKeyError("");
   };
 
   return (
@@ -346,7 +370,7 @@ const AdminProfileDashboard = () => {
           <div style={{ marginTop: '1.25rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1.25rem' }}>
             <div style={{ marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#1e293b', margin: 0, textAlign: 'center' }}>
-                API Changes
+                API Key Changes
               </h3>
               <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.25rem', textAlign: 'center' }}>
                 Put your API key in this field and configure.
@@ -355,22 +379,47 @@ const AdminProfileDashboard = () => {
 
             <form onSubmit={handleAPIKeysSave}>
               <div style={{ marginBottom: '0.75rem' }}>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#374151', marginBottom: '0.4rem' }}>
-                  For Platform
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#374151', marginBottom: '0.4rem' }}>
+                  Guidelines
+                </label>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '400', color: '#374151', marginBottom: '0.4rem' }}>
+                  1. Go to https://platform.openai.com/settings/organization/api-keys
+                  <br></br>
+                  2. Login with your Gmail
+                  <br></br>
+                  3. Create API key (add name and set project as default)
+                  <br></br>
+                  4. Copy instantly after created
+                  <br></br>
+                  5. Put the API key here and save changes
                 </label>
                 <input
                   value={profile.api_keys?.platform || ''}
-                  onChange={(e) => setProfile((prev) => ({ ...prev, api_keys: { ...prev.api_keys, platform: e.target.value } }))}
-                  placeholder="Enter the platform key"
+                  onChange={(e) => {
+                    setProfile((prev) => ({ ...prev, api_keys: { ...prev.api_keys, platform: e.target.value } }));
+                    setApiKeyStatus(null);
+                  }}
+                  placeholder="sk-..."
                   style={{
                     width: '100%', padding: '0.55rem 0.75rem', fontSize: '0.875rem',
-                    border: `1.5px solid ${platformNameStatus === 'error' ? '#fca5a5' : platformNameStatus === 'success' ? '#6ee7b7' : '#e2e8f0'}`,
+                    border: `1.5px solid ${apiKeyStatus === 'error' ? '#fca5a5' : apiKeyStatus === 'success' ? '#6ee7b7' : '#e2e8f0'}`,
                     borderRadius: '8px', outline: 'none',
                     background: api_keysSaving ? '#f1f5f9' : 'white',
                     color: '#1e293b', transition: 'border-color 0.2s', boxSizing: 'border-box',
                   }}
                 />
               </div>
+
+              {apiKeyStatus === 'success' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#059669', marginBottom: '0.75rem' }}>
+                  <CheckCircle size={14} /> API keys updated successfully!
+                </div>
+              )}
+              {apiKeyStatus === 'error' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#dc2626', marginBottom: '0.75rem' }}>
+                  <AlertCircle size={14} /> {apiKeyError}
+                </div>
+              )}
 
 
               {/* <div style={{ marginBottom: '0.75rem' }}>
@@ -391,16 +440,6 @@ const AdminProfileDashboard = () => {
                 />
               </div> */}
 
-              {platformNameStatus === 'success' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#059669', marginBottom: '0.75rem' }}>
-                  <CheckCircle size={14} /> Platform name updated everywhere!
-                </div>
-              )}
-              {platformNameStatus === 'error' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#dc2626', marginBottom: '0.75rem' }}>
-                  <AlertCircle size={14} /> {platformNameError}
-                </div>
-              )}
 
               <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                 <button type="button" onClick={handleAPIKeysCancel} disabled={api_keysSaving}
