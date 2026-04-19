@@ -22,12 +22,19 @@ import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import LandingHeader from '../components/LandingHeader';
 import Container from '../assets/Container.png';
 import { usePlatform as usePlatformContact } from './platformContact';
+import Cookies from 'js-cookie';
 
 // ── Axios instance ─────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: import.meta?.env?.VITE_API_BASE_URL || 'https://reservation-api-kuzr.onrender.com',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = Cookies.get('access_token') || localStorage.getItem('access_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
 // ── Error formatter ────────────────────────────────────────────────────────
@@ -345,6 +352,11 @@ export default function ReservationCRM() {
   const [reviewSearchLoading, setReviewSearchLoading] = useState(false);
   const [reviewSearchError, setReviewSearchError] = useState('');
 
+  // Pay Later & Pay Now state
+  const [payLaterLoading, setPayLaterLoading] = useState(null);
+  const [payNowLoading, setPayNowLoading] = useState(null);
+  const [payLaterSuccess, setPayLaterSuccess] = useState('');
+
   // ── Contact form handlers ─────────────────────────────────────────────
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -429,10 +441,50 @@ export default function ReservationCRM() {
       const res = await api.get('/api/v1/public/bookings/my/list', { params });
       const list = normalizeBookings(res.data);
       setBookings(list);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handlePayLater = async (bookingId) => {
+    if (!bookingId) return;
+    setPayLaterLoading(bookingId);
+    setPayLaterSuccess('');
+    setStatusError('');
+
+    try {
+      await api.post('/api/v1/payments/pay-later', { booking_id: bookingId });
+      setPayLaterSuccess(`✅ Booking ${bookingId} reserved! You can pay at the venue.`);
+      // Refresh the list to show updated status if possible, 
+      // or just rely on the success message.
+      setTimeout(() => setPayLaterSuccess(''), 6000);
     } catch (err) {
       setStatusError(formatBackendError(err));
     } finally {
-      setStatusLoading(false);
+      setPayLaterLoading(null);
+    }
+  };
+
+  const handlePayNow = async (bookingId) => {
+    if (!bookingId) return;
+    setPayNowLoading(bookingId);
+    setStatusError('');
+
+    try {
+      // Try multiple ID variants just in case
+      const bId = bookingId || '';
+      const response = await api.post('/api/v1/payments/create-intent', { booking_id: bId });
+      const paymentUrl = response.data?.payment_url || response.data?.url;
+
+      if (paymentUrl) {
+        window.location.assign(paymentUrl);
+      } else {
+        setStatusError("Could not generate a payment link. Please contact support.");
+      }
+    } catch (err) {
+      setStatusError(formatBackendError(err));
+    } finally {
+      setPayNowLoading(null);
     }
   };
 
@@ -692,7 +744,7 @@ export default function ReservationCRM() {
                           </p>
 
                           {/* Payment Reminder Warning */}
-                          {(booking.status !== 'Confirmed' && booking.status !== 'CONFIRMED') && (
+                          {(booking.status !== 'Confirmed' && booking.status !== 'CONFIRMED' && booking.status !== 'PAID') && (
                             <div style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -717,43 +769,76 @@ export default function ReservationCRM() {
                           )}
 
                           {/* Payment Reminder CTA */}
-                          {(booking.status === 'PENDING_PAYMENT' || booking.status === 'Pending Payment' || (booking.status ?? '').toLowerCase() === 'pending_payment') && (
-                            <div style={{
-                              marginTop: '2px',
-                              padding: '0 12px 12px 12px',
-                              width: '100%'
-                            }}>
-                              <div style={{ flex: 1 }}>
+                          {(
+                            booking.status === 'PENDING_PAYMENT' ||
+                            booking.status === 'Pending Payment' ||
+                            booking.status === 'PENDING' ||
+                            booking.status === 'Pending' ||
+                            booking.status === 'Payment Pending' ||
+                            (booking.status ?? '').toLowerCase().includes('pending')
+                          ) && (
+                              <div style={{
+                                marginTop: '8px',
+                                padding: '0 12px 12px 0',
+                                width: '100%',
+                                display: 'flex',
+                                gap: '10px',
+                                flexWrap: 'wrap'
+                              }}>
                                 <button
-                                  onClick={() => {
-                                    const rawDate = booking.slot_start || booking.date || booking.scheduled_date || '';
-                                    const rawTime = booking.slot_start || booking.time || booking.start_time || '';
-                                    navigate('/paymentsystem', {
-                                      state: {
-                                        serviceName: booking.service_name || booking.service || 'Service',
-                                        price: booking.price || '0.00',
-                                        businessName: booking.business_name || booking.businessName || 'Business',
-                                        selectedTime: rawTime ? new Date(rawTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A',
-                                        selectedDate: rawDate ? new Date(rawDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'
-                                      }
-                                    });
-                                  }}
+                                  onClick={() => handlePayNow(booking.tracking_id || booking.public_tracking_id)}
+                                  disabled={payNowLoading === (booking.tracking_id || booking.public_tracking_id) || payLaterLoading === (booking.tracking_id || booking.public_tracking_id)}
                                   style={{
-                                    display: 'block',
-                                    padding: '6px 14px',
-                                    background: '#92400e',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '8px 16px',
+                                    background: '#2563eb',
                                     color: '#fff',
                                     border: 'none',
-                                    borderRadius: '6px',
-                                    fontSize: '12px',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
                                     fontWeight: '700',
-                                    cursor: 'pointer',
-                                    width: 'fit-content'
+                                    cursor: (payNowLoading || payLaterLoading) ? 'not-allowed' : 'pointer',
+                                    transition: 'background 0.2s',
+                                    opacity: (payNowLoading === (booking.tracking_id || booking.public_tracking_id)) ? 0.8 : 1
                                   }}
                                 >
-                                  Pay to Confirm ⟶
+                                  {payNowLoading === (booking.tracking_id || booking.public_tracking_id) ? 'Redirecting...' : '💳 Pay to Confirm ⟶'}
+                                </button>
+
+                                <button
+                                  onClick={() => handlePayLater(booking.tracking_id || booking.public_tracking_id)}
+                                  disabled={payLaterLoading === (booking.tracking_id || booking.public_tracking_id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '8px 16px',
+                                    background: '#fff',
+                                    color: '#2563eb',
+                                    border: '1.5px solid #2563eb',
+                                    borderRadius: '8px',
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    cursor: payLaterLoading ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.2s'
+                                  }}
+                                >
+                                  {payLaterLoading === (booking.tracking_id || booking.public_tracking_id) ? 'Processing...' : '🕐 Pay at Venue'}
                                 </button>
                               </div>
+                            )}
+
+                          {payLaterSuccess && payLaterSuccess.includes(booking.tracking_id || booking.public_tracking_id) && (
+                            <div style={{
+                              marginTop: '10px',
+                              fontSize: '12px',
+                              color: '#16a34a',
+                              fontWeight: '600',
+                              background: '#f0fdf4',
+                              padding: '8px',
+                              borderRadius: '6px'
+                            }}>
+                              {payLaterSuccess}
                             </div>
                           )}
                         </div>

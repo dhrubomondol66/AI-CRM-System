@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-// import notification from "../assets/notification.png";
-// import email from "../assets/email.png";
-// import sms from "../assets/chatting.png";
-// import whatsappIcon from "../assets/whatsapp.png";
+import notification from "../assets/notification.png";
+import email from "../assets/email.png";
+import sms from "../assets/chatting.png";
+import whatsappIcon from "../assets/whatsapp.png";
 import "../assets/styles/adminProfile.css";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
@@ -46,7 +46,7 @@ const AdminProfileDashboard = () => {
   });
 
   // Fetch existing API keys on mount
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchAPIKeys = async () => {
       try {
         const res = await api.get("/api/v1/admin/settings/api-keys");
@@ -175,7 +175,7 @@ const AdminProfileDashboard = () => {
     try {
       const response = await api.patch("/api/v1/admin/settings/api-keys", payload);
       console.log("Save Success. Server Response:", response.data);
-      
+
       setProfile((prev) => ({ ...prev, api_keys: profile.api_keys }));
       setApiKeyStatus("success");
     } catch (err) {
